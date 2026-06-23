@@ -224,6 +224,49 @@
   .safe p { margin: 0; font-size: 14px; color: var(--muted); }
   .colophon { font-family: var(--mono); font-size: 11.5px; color: var(--muted); margin-top: 30px; letter-spacing: .04em; }
 
+  /* ---- AS-IS vs TO-BE ---- */
+  .compare { padding: 56px 0; border-top: 1px solid var(--line); }
+  .cols { display: grid; grid-template-columns: 1fr; gap: 18px; margin-top: 24px; }
+  @media (min-width: 720px) { .cols { grid-template-columns: 1fr 1fr; } }
+  .col { background: var(--paper); border: 1px solid var(--line); border-radius: 8px; padding: 24px; }
+  .col.asis { border-top: 4px solid var(--accent); }
+  .col.tobe { border-top: 4px solid var(--teal); }
+  .col .tag-h { font-family: var(--mono); font-size: 12px; letter-spacing: .1em; text-transform: uppercase; margin: 0 0 6px; }
+  .col.asis .tag-h { color: var(--accent); }
+  .col.tobe .tag-h { color: var(--teal); }
+  .col h3 { margin: 0 0 16px; font-size: 19px; font-weight: 800; }
+  .steps { list-style: none; margin: 0; padding: 0; }
+  .steps li { display: flex; justify-content: space-between; gap: 14px; font-size: 14.5px; padding: 9px 0; border-bottom: 1px dashed var(--line); }
+  .steps li .t { font-family: var(--mono); font-size: 12.5px; white-space: nowrap; }
+  .col.asis .steps li .t { color: var(--accent); }
+  .col.tobe .steps li .t { color: var(--teal); }
+  .total { display: flex; align-items: baseline; justify-content: space-between; margin-top: 16px; padding-top: 14px; border-top: 2px solid var(--line); }
+  .total .lab { font-size: 13.5px; color: var(--muted); }
+  .total .big { font-family: var(--serif); font-size: 30px; font-weight: 700; }
+  .col.asis .total .big { color: var(--accent); }
+  .col.tobe .total .big { color: var(--teal); }
+  .punch { text-align: center; margin-top: 28px; font-family: var(--serif); font-size: clamp(24px, 4.2vw, 38px); font-weight: 700; }
+  .punch .from { color: var(--accent); }
+  .punch .to { color: var(--teal); }
+  .punch .arr { color: var(--muted); margin: 0 14px; }
+
+  /* ---- roles ---- */
+  .roles { padding: 56px 0; border-top: 1px solid var(--line); }
+  .role-grid { display: grid; grid-template-columns: 1fr; gap: 16px; margin-top: 24px; }
+  @media (min-width: 720px) { .role-grid { grid-template-columns: repeat(3, 1fr); } }
+  .role { background: var(--paper); border: 1px solid var(--line); border-radius: 8px; padding: 22px; }
+  .role .ic { font-size: 26px; line-height: 1; }
+  .role .who { font-family: var(--mono); font-size: 11px; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); margin: 10px 0 2px; }
+  .role h3 { margin: 0 0 4px; font-size: 17px; font-weight: 800; }
+  .role.person { border-top: 4px solid var(--gold); }
+  .role.ai { border-top: 4px solid var(--accent); }
+  .role.sys { border-top: 4px solid var(--teal); }
+  .role ul { margin: 12px 0 0; padding-left: 18px; }
+  .role li { font-size: 14px; margin: 7px 0; }
+  .prep { margin-top: 20px; background: rgba(185,138,46,.12); border: 1px solid rgba(185,138,46,.35); border-radius: 8px; padding: 18px 22px; }
+  .prep h4 { margin: 0 0 8px; font-size: 15px; color: #8a6516; }
+  .prep p { margin: 0; font-size: 14px; color: var(--muted); }
+
   @media (prefers-reduced-motion: reduce) {
     .anim, .row.in { animation: none !important; }
   }
@@ -317,6 +360,83 @@
       <div class="node"><div class="n">DB</div><div class="t">고객 카드</div><div class="d">태그·갱신일 반영</div></div>
       <div class="node"><div class="n">AUTO</div><div class="t">자동 분류</div><div class="d">대시보드 집계</div></div>
       <div class="node ai-node"><div class="n">AI</div><div class="t">제안서·문자</div><div class="d">맞춤 작성</div></div>
+    </div>
+  </section>
+
+  <section class="compare">
+    <span class="step-no">AS-IS → TO-BE</span>
+    <h2>고객 한 명, 하루가 이렇게 달라집니다</h2>
+    <p class="lead">상담을 마치고 제안서·문자를 보내고 갱신 고객까지 챙기는 과정을 지금 방식과 비교했습니다. (정수남 고객 기준 · 예시)</p>
+    <div class="cols">
+      <div class="col asis">
+        <p class="tag-h">🔴 AS-IS · 지금</p>
+        <h3>밤에 따로 정리, 야근</h3>
+        <ul class="steps">
+          <li><span>녹음 다시 듣고 상담 정리</span><span class="t">20분</span></li>
+          <li><span>엑셀에서 고객·가입이력 찾기</span><span class="t">5분</span></li>
+          <li><span>제안서 양식에 직접 작성</span><span class="t">30분</span></li>
+          <li><span>안내 문자 문구 고민</span><span class="t">10분</span></li>
+          <li><span>갱신 고객 엑셀로 일일이 확인</span><span class="t">15분</span></li>
+        </ul>
+        <div class="total"><span class="lab">고객 1명 · 누락 위험</span><span class="big">약 80분</span></div>
+      </div>
+      <div class="col tobe">
+        <p class="tag-h">🟢 TO-BE · 이 시스템</p>
+        <h3>상담 직후 5분, 칼퇴</h3>
+        <ul class="steps">
+          <li><span>녹취 붙여넣기 → AI 정리</span><span class="t">1분</span></li>
+          <li><span>고객 카드에 반영·태그 확인</span><span class="t">2분</span></li>
+          <li><span>“제안서 써줘” → AI 작성</span><span class="t">2분</span></li>
+          <li><span>“문자 써줘” → AI 작성</span><span class="t">30초</span></li>
+          <li><span>대시보드가 갱신 고객 자동 집계</span><span class="t">0분</span></li>
+        </ul>
+        <div class="total"><span class="lab">고객 1명 · 누락 없음</span><span class="big">약 6분</span></div>
+      </div>
+    </div>
+    <p class="punch"><span class="from">80분</span><span class="arr">→</span><span class="to">6분</span></p>
+  </section>
+
+  <section class="roles">
+    <span class="step-no">역할 정리</span>
+    <h2>누가 무엇을 하나요</h2>
+    <p class="lead">설계사는 <strong>입력과 최종 검토</strong>만, 반복되는 글쓰기와 분류는 AI와 시스템이 맡습니다.</p>
+    <div class="role-grid">
+      <div class="role person">
+        <div class="ic">👤</div>
+        <p class="who">사람만 가능</p>
+        <h3>보험설계사</h3>
+        <ul>
+          <li>상담·녹음 (사전 동의)</li>
+          <li>갱신일·유형 태그 입력</li>
+          <li>제안서·문자 <strong>검토 후 발송</strong></li>
+          <li>판단·관계·영업</li>
+        </ul>
+      </div>
+      <div class="role ai">
+        <div class="ic">🤖</div>
+        <p class="who">글쓰기 대신</p>
+        <h3>AI (Claude)</h3>
+        <ul>
+          <li>상담 녹취 정리·요약</li>
+          <li>핵심 추출 + 태그 추천</li>
+          <li>맞춤 제안서 작성 <em>(초안)</em></li>
+          <li>안내 문자 작성 <em>(초안)</em></li>
+        </ul>
+      </div>
+      <div class="role sys">
+        <div class="ic">🔁</div>
+        <p class="who">자동</p>
+        <h3>시스템</h3>
+        <ul>
+          <li>갱신 임박 고객 자동 집계</li>
+          <li>자녀보험 미가입 분류</li>
+          <li>고객 검색·연결</li>
+        </ul>
+      </div>
+    </div>
+    <div class="prep">
+      <h4>🧰 사전 준비 (처음 1번만)</h4>
+      <p>Obsidian 설치 · Dataview 설치 · 내가 파는 상품을 상품DB에 정리 · 녹음 받아쓰기 앱 정하기 · 고객 녹음/개인정보 동의 절차 마련.</p>
     </div>
   </section>
 
