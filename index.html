@@ -4,6 +4,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>보험 영업 AI 도우미 — 어떻게 작동하나요</title>
 <style>
+  @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700;800;900&display=swap');
   :root {
     --ground: #E8EBE2;
     --paper: #F4F6EF;
@@ -13,7 +14,7 @@
     --accent: #CC3F26;   /* 도장 vermilion */
     --teal: #2C6B66;     /* 보장·신뢰 */
     --gold: #B98A2E;
-    --kr: "Malgun Gothic", "Apple SD Gothic Neo", "Noto Sans KR", sans-serif;
+    --kr: "Noto Sans KR", "Malgun Gothic", "Apple SD Gothic Neo", sans-serif;
     --mono: "Consolas", "D2Coding", "Menlo", monospace;
     --serif: Georgia, "Times New Roman", serif;
   }
@@ -267,25 +268,48 @@
   .prep h4 { margin: 0 0 8px; font-size: 15px; color: #8a6516; }
   .prep p { margin: 0; font-size: 14px; color: var(--muted); }
 
-  /* ---- role flow diagram ---- */
+  /* ---- role flow diagram (infographic) ---- */
   .diagram { padding: 56px 0; border-top: 1px solid var(--line); }
-  .legend { display: flex; flex-wrap: wrap; gap: 18px; margin: 18px 0 4px; font-family: var(--mono); font-size: 12.5px; }
-  .lg { display: inline-flex; align-items: center; gap: 7px; color: var(--text); }
-  .lg i { width: 12px; height: 12px; border-radius: 50%; display: inline-block; }
-  .lg.person i { background: var(--gold); }
-  .lg.ai i { background: var(--accent); }
-  .lg.sys i { background: var(--teal); }
-  .flowv { list-style: none; margin: 22px 0 0; padding: 0 0 0 8px; position: relative; }
-  .flowv::before { content: ""; position: absolute; left: 15px; top: 8px; bottom: 26px; width: 2px; background: var(--line); }
-  .fstep { position: relative; display: flex; gap: 18px; padding: 0 0 18px 0; }
-  .fstep.person { color: var(--gold); }
-  .fstep.ai { color: var(--accent); }
-  .fstep.sys { color: var(--teal); }
-  .fstep .dot { position: relative; z-index: 1; flex: 0 0 16px; width: 16px; height: 16px; border-radius: 50%; margin-top: 6px; background: currentColor; border: 3px solid var(--ground); box-shadow: 0 0 0 2px currentColor; }
-  .fbody { flex: 1; background: var(--paper); border: 1px solid var(--line); border-left: 3px solid currentColor; border-radius: 6px; padding: 12px 16px; }
-  .fbody .actor { font-family: var(--mono); font-size: 10.5px; letter-spacing: .12em; text-transform: uppercase; color: currentColor; }
-  .fbody b { display: block; color: var(--text); font-size: 15.5px; margin: 2px 0 3px; }
-  .fbody p { margin: 0; font-size: 13.5px; color: var(--muted); }
+  .dg-legend { display: flex; flex-wrap: wrap; gap: 10px; margin: 20px 0; }
+  .dg-chip { display: inline-flex; align-items: center; gap: 8px; font-size: 13.5px; font-weight: 700; padding: 7px 14px; border-radius: 999px; border: 2px solid; background: var(--paper); }
+  .dg-chip.person { color: #8a6516; border-color: #8a6516; }
+  .dg-chip.ai { color: var(--accent); border-color: var(--accent); }
+  .dg-chip.sys { color: var(--teal); border-color: var(--teal); }
+  .dg-flow { max-width: 620px; }
+  .dg-prep { background: var(--paper); border: 1px dashed var(--line); border-radius: 12px; padding: 14px 18px; text-align: center; font-size: 13.5px; color: var(--muted); }
+  .dg-prep b { color: var(--text); }
+  .dg-down { text-align: center; font-size: 26px; line-height: 1; color: var(--line); margin: 8px 0; }
+  .dg-step { display: flex; align-items: stretch; gap: 16px; border-radius: 16px; padding: 18px 20px; border: 1px solid var(--line); border-left-width: 8px; background: var(--paper); }
+  .dg-step.person { border-left-color: #8a6516; background: linear-gradient(90deg, rgba(138,101,22,.08), var(--paper) 60%); }
+  .dg-step.ai { border-left-color: var(--accent); background: linear-gradient(90deg, rgba(204,63,38,.07), var(--paper) 60%); }
+  .dg-step.sys { border-left-color: var(--teal); background: linear-gradient(90deg, rgba(44,107,102,.07), var(--paper) 60%); }
+  .dg-num { flex: 0 0 auto; width: 52px; height: 52px; border-radius: 50%; display: grid; place-content: center; font-family: var(--serif); font-size: 24px; font-weight: 700; color: #fff; }
+  .dg-step.person .dg-num { background: #8a6516; }
+  .dg-step.ai .dg-num { background: var(--accent); }
+  .dg-step.sys .dg-num { background: var(--teal); }
+  .dg-body { display: flex; flex-direction: column; justify-content: center; }
+  .dg-role { font-family: var(--mono); font-size: 11px; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; }
+  .dg-step.person .dg-role { color: #8a6516; }
+  .dg-step.ai .dg-role { color: var(--accent); }
+  .dg-step.sys .dg-role { color: var(--teal); }
+  .dg-ttl { font-size: 19px; font-weight: 800; margin: 1px 0 2px; }
+  .dg-desc { font-size: 13.5px; color: var(--muted); }
+  .dg-icon { margin-left: auto; align-self: center; font-size: 26px; opacity: .85; }
+  .dg-summary { margin-top: 30px; }
+  .dg-summary h3 { text-align: center; font-size: 15px; color: var(--muted); font-weight: 700; margin: 0 0 14px; }
+  .dg-scards { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; max-width: 620px; }
+  .dg-scard { text-align: center; border-radius: 12px; padding: 16px 8px; border: 2px solid; background: var(--paper); }
+  .dg-scard.person { border-color: #8a6516; }
+  .dg-scard.ai { border-color: var(--accent); }
+  .dg-scard.sys { border-color: var(--teal); }
+  .dg-scard .who { font-size: 24px; }
+  .dg-scard .lab { font-weight: 800; font-size: 14px; margin: 4px 0 6px; }
+  .dg-scard.person .lab { color: #8a6516; }
+  .dg-scard.ai .lab { color: var(--accent); }
+  .dg-scard.sys .lab { color: var(--teal); }
+  .dg-scard .nums { font-family: var(--mono); font-size: 12px; color: var(--muted); }
+  .dg-scard .do { font-size: 12px; color: var(--muted); margin-top: 3px; }
+  @media (max-width: 440px) { .dg-scards { grid-template-columns: 1fr; } .dg-icon { display: none; } }
 
   @media (prefers-reduced-motion: reduce) {
     .anim, .row.in { animation: none !important; }
@@ -375,20 +399,34 @@
     <span class="step-no">역할 흐름도</span>
     <h2>상담 한 건이 흘러가는 순서</h2>
     <p class="lead">위에서 아래로 시간 순서입니다. <strong>색이 곧 역할</strong>이에요 — 누가 무엇을 하는지 한눈에 보입니다.</p>
-    <div class="legend">
-      <span class="lg person"><i></i>👤 설계사 (사람)</span>
-      <span class="lg ai"><i></i>🤖 AI</span>
-      <span class="lg sys"><i></i>🔁 시스템 (자동)</span>
+    <div class="dg-legend">
+      <span class="dg-chip person">👤 설계사 (사람)</span>
+      <span class="dg-chip ai">🤖 AI</span>
+      <span class="dg-chip sys">🔁 시스템 (자동)</span>
     </div>
-    <div class="prep">🧰 <strong>사전 준비 (처음 1번만)</strong> — Obsidian·Dataview 설치 · 내가 파는 상품을 상품DB에 정리 · 녹음 받아쓰기 앱 정하기 · 고객 동의 절차 마련</div>
-    <ol class="flowv">
-      <li class="fstep person"><span class="dot"></span><div class="fbody"><span class="actor">설계사</span><b>1. 상담 · 녹음</b><p>고객 동의를 받고 상담하며 녹음</p></div></li>
-      <li class="fstep ai"><span class="dot"></span><div class="fbody"><span class="actor">AI</span><b>2. 녹취 정리</b><p>받아쓰기 텍스트 → 핵심 요약 · 태그 추천</p></div></li>
-      <li class="fstep person"><span class="dot"></span><div class="fbody"><span class="actor">설계사</span><b>3. 고객 카드에 입력</b><p>갱신일 · 유형 태그 · 메모 적기 (자동 분류의 재료)</p></div></li>
-      <li class="fstep sys"><span class="dot"></span><div class="fbody"><span class="actor">시스템</span><b>4. 자동 분류</b><p>대시보드가 갱신 임박 · 자녀보험 미가입 고객을 자동 집계</p></div></li>
-      <li class="fstep ai"><span class="dot"></span><div class="fbody"><span class="actor">AI</span><b>5. 제안서 · 문자 작성</b><p>고객 상황에 맞춰 초안 생성</p></div></li>
-      <li class="fstep person"><span class="dot"></span><div class="fbody"><span class="actor">설계사</span><b>6. 검토 · 발송</b><p>초안을 확인하고 고객에게 전송 ✅ (최종 책임은 사람)</p></div></li>
-    </ol>
+    <div class="dg-flow">
+      <div class="dg-prep">🧰 <b>사전 준비 (처음 1번만)</b> · Obsidian·Dataview 설치 · 상품DB 정리 · 녹음앱·동의 절차</div>
+      <div class="dg-down">↓</div>
+      <div class="dg-step person"><div class="dg-num">1</div><div class="dg-body"><span class="dg-role">설계사</span><span class="dg-ttl">상담 · 녹음</span><span class="dg-desc">고객 동의 후 상담하며 녹음</span></div><div class="dg-icon">🤝</div></div>
+      <div class="dg-down">↓</div>
+      <div class="dg-step ai"><div class="dg-num">2</div><div class="dg-body"><span class="dg-role">AI</span><span class="dg-ttl">녹취 정리</span><span class="dg-desc">받아쓰기 → 요약 · 태그 추천</span></div><div class="dg-icon">📝</div></div>
+      <div class="dg-down">↓</div>
+      <div class="dg-step person"><div class="dg-num">3</div><div class="dg-body"><span class="dg-role">설계사</span><span class="dg-ttl">고객 카드에 입력</span><span class="dg-desc">갱신일 · 태그 · 메모 적기</span></div><div class="dg-icon">🏷️</div></div>
+      <div class="dg-down">↓</div>
+      <div class="dg-step sys"><div class="dg-num">4</div><div class="dg-body"><span class="dg-role">시스템</span><span class="dg-ttl">자동 분류</span><span class="dg-desc">대시보드가 갱신임박·자녀보험 집계</span></div><div class="dg-icon">📊</div></div>
+      <div class="dg-down">↓</div>
+      <div class="dg-step ai"><div class="dg-num">5</div><div class="dg-body"><span class="dg-role">AI</span><span class="dg-ttl">제안서 · 문자 작성</span><span class="dg-desc">고객 맞춤 초안 생성</span></div><div class="dg-icon">📄</div></div>
+      <div class="dg-down">↓</div>
+      <div class="dg-step person"><div class="dg-num">6</div><div class="dg-body"><span class="dg-role">설계사</span><span class="dg-ttl">검토 · 발송</span><span class="dg-desc">확인 후 전송 ✅ (최종 책임)</span></div><div class="dg-icon">📬</div></div>
+    </div>
+    <div class="dg-summary">
+      <h3>누가 무엇을 하나요</h3>
+      <div class="dg-scards">
+        <div class="dg-scard person"><div class="who">👤</div><div class="lab">설계사</div><div class="nums">1 · 3 · 6</div><div class="do">상담·입력·검토</div></div>
+        <div class="dg-scard ai"><div class="who">🤖</div><div class="lab">AI</div><div class="nums">2 · 5</div><div class="do">정리·작성</div></div>
+        <div class="dg-scard sys"><div class="who">🔁</div><div class="lab">시스템</div><div class="nums">4</div><div class="do">자동 분류</div></div>
+      </div>
+    </div>
   </section>
 
   <section class="compare">
@@ -422,50 +460,6 @@
       </div>
     </div>
     <p class="punch"><span class="from">80분</span><span class="arr">→</span><span class="to">6분</span></p>
-  </section>
-
-  <section class="roles">
-    <span class="step-no">역할 정리</span>
-    <h2>누가 무엇을 하나요</h2>
-    <p class="lead">설계사는 <strong>입력과 최종 검토</strong>만, 반복되는 글쓰기와 분류는 AI와 시스템이 맡습니다.</p>
-    <div class="role-grid">
-      <div class="role person">
-        <div class="ic">👤</div>
-        <p class="who">사람만 가능</p>
-        <h3>보험설계사</h3>
-        <ul>
-          <li>상담·녹음 (사전 동의)</li>
-          <li>갱신일·유형 태그 입력</li>
-          <li>제안서·문자 <strong>검토 후 발송</strong></li>
-          <li>판단·관계·영업</li>
-        </ul>
-      </div>
-      <div class="role ai">
-        <div class="ic">🤖</div>
-        <p class="who">글쓰기 대신</p>
-        <h3>AI (Claude)</h3>
-        <ul>
-          <li>상담 녹취 정리·요약</li>
-          <li>핵심 추출 + 태그 추천</li>
-          <li>맞춤 제안서 작성 <em>(초안)</em></li>
-          <li>안내 문자 작성 <em>(초안)</em></li>
-        </ul>
-      </div>
-      <div class="role sys">
-        <div class="ic">🔁</div>
-        <p class="who">자동</p>
-        <h3>시스템</h3>
-        <ul>
-          <li>갱신 임박 고객 자동 집계</li>
-          <li>자녀보험 미가입 분류</li>
-          <li>고객 검색·연결</li>
-        </ul>
-      </div>
-    </div>
-    <div class="prep">
-      <h4>🧰 사전 준비 (처음 1번만)</h4>
-      <p>Obsidian 설치 · Dataview 설치 · 내가 파는 상품을 상품DB에 정리 · 녹음 받아쓰기 앱 정하기 · 고객 녹음/개인정보 동의 절차 마련.</p>
-    </div>
   </section>
 
   <section class="vs">
