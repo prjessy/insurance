@@ -1,0 +1,12 @@
+# 화면 캡처 이미지 (시스템과 무관)
+*.jpg
+*.JPG
+*.jpeg
+*.png
+
+# Obsidian 작업 상태 캐시 (개인 환경)
+.obsidian/workspace.json
+.obsidian/workspace-mobile.json
+.obsidian/workspace
+.obsidian/cache
+.trash/

@@ -1,0 +1,359 @@
+<!doctype html>
+<html lang="ko">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>보험 영업 AI 도우미 — 어떻게 작동하나요</title>
+<style>
+  :root {
+    --ground: #E8EBE2;
+    --paper: #F4F6EF;
+    --text: #1F2723;
+    --muted: #5B665E;
+    --line: #C9CFC1;
+    --accent: #CC3F26;   /* 도장 vermilion */
+    --teal: #2C6B66;     /* 보장·신뢰 */
+    --gold: #B98A2E;
+    --kr: "Malgun Gothic", "Apple SD Gothic Neo", "Noto Sans KR", sans-serif;
+    --mono: "Consolas", "D2Coding", "Menlo", monospace;
+    --serif: Georgia, "Times New Roman", serif;
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    margin: 0;
+    background: var(--ground);
+    color: var(--text);
+    font-family: var(--kr);
+    line-height: 1.7;
+    -webkit-font-smoothing: antialiased;
+    background-image:
+      radial-gradient(circle at 12% 8%, rgba(44,107,102,.05), transparent 42%),
+      radial-gradient(circle at 88% 92%, rgba(204,63,38,.04), transparent 40%);
+  }
+
+  .wrap { max-width: 920px; margin: 0 auto; padding: 0 24px; }
+
+  /* ---- shared bits ---- */
+  .eyebrow {
+    font-family: var(--mono);
+    font-size: 12px;
+    letter-spacing: .22em;
+    text-transform: uppercase;
+    color: var(--teal);
+    margin: 0 0 18px;
+  }
+  .step-no {
+    font-family: var(--serif);
+    font-size: 13px;
+    letter-spacing: .1em;
+    color: var(--accent);
+    font-weight: 700;
+  }
+  h2 { font-size: clamp(24px, 4vw, 34px); line-height: 1.25; letter-spacing: -.01em; margin: 6px 0 14px; font-weight: 800; }
+  .lead { color: var(--muted); font-size: 17px; max-width: 60ch; }
+
+  /* ---- hero ---- */
+  header.hero { padding: 88px 0 64px; }
+  .hero h1 {
+    font-size: clamp(34px, 6.4vw, 60px);
+    line-height: 1.12;
+    letter-spacing: -.02em;
+    font-weight: 800;
+    margin: 0 0 26px;
+  }
+  .hero h1 .hl { color: var(--accent); }
+  .hero .sub { font-size: clamp(17px, 2.2vw, 20px); color: var(--muted); max-width: 56ch; margin: 0 0 18px; }
+  .hero .fine {
+    font-family: var(--mono);
+    font-size: 12.5px;
+    color: var(--teal);
+    border-left: 3px solid var(--teal);
+    padding-left: 12px;
+    max-width: 48ch;
+  }
+  .hero .anim { animation: rise .8s cubic-bezier(.2,.7,.2,1) both; }
+  .hero .anim:nth-child(2) { animation-delay: .08s; }
+  .hero .anim:nth-child(3) { animation-delay: .16s; }
+  .hero .anim:nth-child(4) { animation-delay: .24s; }
+
+  @keyframes rise { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: none; } }
+
+  /* ---- scattered chips (problem) ---- */
+  .problem { padding: 40px 0 8px; border-top: 1px solid var(--line); }
+  .chips { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 20px; }
+  .chip {
+    font-family: var(--mono); font-size: 13px;
+    background: var(--paper); border: 1px solid var(--line);
+    padding: 9px 14px; border-radius: 3px; color: var(--muted);
+    box-shadow: 2px 2px 0 rgba(31,39,35,.05);
+  }
+  .chip:nth-child(odd) { transform: rotate(-1.4deg); }
+  .chip:nth-child(even) { transform: rotate(1.2deg); }
+  .arrow-down { text-align: center; color: var(--accent); font-size: 26px; margin: 26px 0 8px; font-family: var(--serif); }
+
+  /* ---- acts ---- */
+  .act { padding: 56px 0; border-top: 1px solid var(--line); }
+  .act .lead { margin-bottom: 26px; }
+
+  /* customer card */
+  .card {
+    background: var(--paper);
+    border: 1px solid var(--line);
+    border-radius: 6px;
+    padding: 22px 24px;
+    box-shadow: 0 1px 0 rgba(31,39,35,.04), 0 14px 30px -20px rgba(31,39,35,.4);
+    max-width: 460px;
+  }
+  .card .name { font-size: 21px; font-weight: 800; margin: 0; }
+  .card .meta { font-family: var(--mono); font-size: 12.5px; color: var(--muted); margin: 4px 0 16px; }
+  .tags { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 16px; }
+  .tag {
+    font-family: var(--mono); font-size: 11.5px; letter-spacing: .03em;
+    padding: 4px 10px; border-radius: 999px;
+    background: rgba(204,63,38,.1); color: var(--accent);
+    border: 1px solid rgba(204,63,38,.28);
+  }
+  .tag.teal { background: rgba(44,107,102,.1); color: var(--teal); border-color: rgba(44,107,102,.28); }
+  .kv { display: grid; grid-template-columns: auto 1fr; gap: 6px 16px; font-size: 14.5px; }
+  .kv dt { color: var(--muted); font-family: var(--mono); font-size: 12.5px; padding-top: 2px; }
+  .kv dd { margin: 0; }
+
+  /* dashboard */
+  .dash {
+    background: #1F2723; color: #E8EBE2;
+    border-radius: 8px; padding: 8px 0 6px; overflow: hidden;
+    box-shadow: 0 22px 44px -26px rgba(31,39,35,.7);
+  }
+  .dash .bar {
+    font-family: var(--mono); font-size: 12px; letter-spacing: .04em;
+    color: #9aa89f; padding: 12px 20px; border-bottom: 1px solid #313b34;
+    display: flex; align-items: center; gap: 8px;
+  }
+  .dash .bar b { color: var(--accent); font-weight: 700; }
+  .row {
+    display: grid; grid-template-columns: 1.2fr 1fr 1fr; gap: 12px;
+    padding: 13px 20px; font-size: 14px; align-items: center;
+    border-bottom: 1px solid #2a332d;
+  }
+  .row.head { color: #8b988f; font-family: var(--mono); font-size: 11.5px; letter-spacing: .08em; text-transform: uppercase; }
+  .row .due { font-family: var(--mono); color: #f0c97a; }
+  .row .pulled { display: inline-block; }
+  .row.in { animation: pull .6s ease both; }
+  .row.in:nth-child(3) { animation-delay: .1s; }
+  .row.in:nth-child(4) { animation-delay: .22s; }
+  .row.in:nth-child(5) { animation-delay: .34s; }
+  @keyframes pull { from { opacity: 0; transform: translateX(-18px); } to { opacity: 1; transform: none; } }
+  .dash .foot { font-family: var(--mono); font-size: 12px; color: #7f8d83; padding: 12px 20px 8px; }
+  .dash .foot b { color: #E8EBE2; }
+
+  /* AI output (before / after) */
+  .io { display: grid; grid-template-columns: 1fr; gap: 18px; }
+  @media (min-width: 720px) { .io { grid-template-columns: .85fr 1.15fr; align-items: start; } }
+  .transcript {
+    background: var(--paper); border: 1px dashed var(--line);
+    border-radius: 6px; padding: 18px 20px; font-size: 14.5px; color: var(--muted);
+  }
+  .transcript .label, .ai .label {
+    font-family: var(--mono); font-size: 11px; letter-spacing: .12em; text-transform: uppercase;
+    color: var(--teal); display: block; margin-bottom: 10px;
+  }
+  .ai {
+    position: relative;
+    background: var(--paper); border: 1px solid var(--line);
+    border-radius: 6px; padding: 22px 24px;
+    box-shadow: 0 16px 34px -22px rgba(31,39,35,.5);
+  }
+  .ai .label { color: var(--accent); }
+  .ai h4 { margin: 0 0 4px; font-size: 17px; font-weight: 800; }
+  .ai p { margin: 10px 0; font-size: 14.5px; }
+  .ai .msg {
+    margin-top: 16px; padding: 14px 16px; background: var(--ground);
+    border-radius: 6px; border-left: 3px solid var(--teal); font-size: 14px;
+  }
+  .ai .msg b { color: var(--teal); font-family: var(--mono); font-size: 11px; letter-spacing: .1em; display: block; margin-bottom: 6px; text-transform: uppercase; }
+
+  /* the stamp — one bold moment */
+  .stamp {
+    position: absolute; top: 14px; right: 16px;
+    width: 88px; height: 88px; border-radius: 50%;
+    border: 2.5px solid var(--accent); color: var(--accent);
+    display: grid; place-content: center; text-align: center;
+    font-family: var(--mono); font-size: 11px; letter-spacing: .06em; line-height: 1.3;
+    transform: rotate(-13deg); opacity: .82;
+    box-shadow: inset 0 0 0 1px rgba(204,63,38,.25);
+  }
+  .stamp::before {
+    content: ""; position: absolute; inset: 6px; border-radius: 50%;
+    border: 1px solid rgba(204,63,38,.5);
+  }
+  .stamp b { font-size: 15px; letter-spacing: .12em; }
+
+  /* flow */
+  .flow { padding: 56px 0; border-top: 1px solid var(--line); }
+  .pipe { display: flex; flex-wrap: wrap; align-items: stretch; gap: 10px; margin-top: 24px; }
+  .node {
+    flex: 1 1 130px; background: var(--paper); border: 1px solid var(--line);
+    border-radius: 6px; padding: 16px 14px; text-align: center;
+  }
+  .node .n { font-family: var(--mono); font-size: 11px; color: var(--teal); letter-spacing: .1em; }
+  .node .t { font-weight: 700; font-size: 15px; margin-top: 6px; }
+  .node .d { font-size: 12.5px; color: var(--muted); margin-top: 4px; }
+  .node.ai-node { border-color: rgba(204,63,38,.4); background: rgba(204,63,38,.05); }
+  .node.ai-node .n { color: var(--accent); }
+
+  /* comparison */
+  .vs { padding: 56px 0; border-top: 1px solid var(--line); }
+  .vs-grid { display: grid; grid-template-columns: 1fr; gap: 16px; margin-top: 22px; }
+  @media (min-width: 680px) { .vs-grid { grid-template-columns: 1fr 1fr; } }
+  .panel { background: var(--paper); border: 1px solid var(--line); border-radius: 6px; padding: 22px 24px; }
+  .panel h3 { margin: 0 0 14px; font-size: 18px; display: flex; align-items: baseline; gap: 10px; }
+  .panel h3 span { font-family: var(--mono); font-size: 11px; color: var(--muted); letter-spacing: .08em; }
+  .panel.now { border-top: 4px solid var(--accent); }
+  .panel ul { margin: 0; padding-left: 18px; }
+  .panel li { font-size: 14.5px; margin: 8px 0; }
+
+  /* footer */
+  footer { padding: 56px 0 80px; border-top: 1px solid var(--line); }
+  .safe {
+    background: rgba(44,107,102,.08); border: 1px solid rgba(44,107,102,.25);
+    border-radius: 8px; padding: 22px 24px; display: flex; gap: 16px; align-items: flex-start;
+  }
+  .safe .ic { font-size: 24px; line-height: 1; }
+  .safe h3 { margin: 0 0 6px; font-size: 16px; color: var(--teal); }
+  .safe p { margin: 0; font-size: 14px; color: var(--muted); }
+  .colophon { font-family: var(--mono); font-size: 11.5px; color: var(--muted); margin-top: 30px; letter-spacing: .04em; }
+
+  @media (prefers-reduced-motion: reduce) {
+    .anim, .row.in { animation: none !important; }
+  }
+</style>
+
+<div class="wrap">
+
+  <header class="hero">
+    <p class="eyebrow anim">Obsidian × Claude — 보험 영업 도우미</p>
+    <h1 class="anim">흩어진 고객 정보가 스스로 정리되고,<br><span class="hl">AI가 제안서까지 씁니다.</span></h1>
+    <p class="sub anim">수첩·엑셀·카톡에 흩어진 상담 내용을 한곳에 모으면 — 갱신이 임박한 고객이 자동으로 추려지고, 고객별 맞춤 제안서와 안내 문자를 AI가 대신 작성합니다.</p>
+    <p class="fine anim">코딩 없이, 내 컴퓨터 안에서.<br>고객 정보는 클라우드로 나가지 않습니다.</p>
+  </header>
+
+  <section class="problem">
+    <span class="step-no">시작점</span>
+    <h2>지금은 정보가 이렇게 흩어져 있죠</h2>
+    <div class="chips">
+      <span class="chip">📒 상담 수첩</span>
+      <span class="chip">📊 엑셀 고객명단</span>
+      <span class="chip">💬 카톡 대화</span>
+      <span class="chip">📞 통화 메모</span>
+      <span class="chip">🧾 가입 서류</span>
+      <span class="chip">🧠 머릿속 기억</span>
+    </div>
+    <div class="arrow-down">↓</div>
+  </section>
+
+  <section class="act">
+    <span class="step-no">01 — 모으기</span>
+    <h2>고객 한 명 = 한 장의 카드</h2>
+    <p class="lead">고객마다 카드 한 장에 가족 구성, 가입 이력, 갱신일, 유형 태그를 적어 둡니다. 상담할 때마다 여기에 메모만 더하면 됩니다.</p>
+    <div class="card">
+      <p class="name">정수남</p>
+      <p class="meta">33세 · 010-3456-7890 · 배우자, 자녀(3세)</p>
+      <div class="tags">
+        <span class="tag">#갱신임박</span>
+        <span class="tag">#자녀보험미가입</span>
+      </div>
+      <dl class="kv">
+        <dt>실손보험</dt><dd>월 29,000원 · <strong>갱신 7/5</strong></dd>
+        <dt>관심사</dt><dd>첫 아이 보장, 실손 갱신 부담</dd>
+        <dt>최근상담</dt><dd>2026-06-10</dd>
+      </dl>
+    </div>
+  </section>
+
+  <section class="act">
+    <span class="step-no">02 — 자동 분류</span>
+    <h2>태그만 달면, 조건에 맞는 고객이 저절로 모입니다</h2>
+    <p class="lead">“갱신이 60일 안에 닥친 고객”을 손으로 찾을 필요가 없습니다. 카드에 태그만 있으면 시스템이 알아서 추려서 표로 보여줍니다. 고객이 600명이어도 똑같이 1초입니다.</p>
+    <div class="dash">
+      <div class="bar"><b>●</b> 대시보드 — 🔔 갱신 임박 (60일 이내)</div>
+      <div class="row head"><span>고객</span><span>갱신일</span><span>태그</span></div>
+      <div class="row in"><span class="pulled">홍길동</span><span class="due">2026-07-20</span><span>갱신임박 · 자녀</span></div>
+      <div class="row in"><span class="pulled">정수남</span><span class="due">2026-07-05</span><span>갱신임박 · 자녀</span></div>
+      <div class="row in"><span class="pulled">김영희</span><span class="due">2026-08-10</span><span>갱신임박 · VIP</span></div>
+      <div class="foot">전체 고객 <b>6명</b> 중 조건에 맞는 <b>3명</b>만 자동으로 추려짐</div>
+    </div>
+  </section>
+
+  <section class="act">
+    <span class="step-no">03 — AI가 씁니다</span>
+    <h2>상담 녹취를 붙여넣으면, 제안서와 문자가 나옵니다</h2>
+    <p class="lead">받아쓰기한 상담 내용을 AI에게 건네면 — 고객 상황을 읽고, 가진 상품 중 맞는 걸 골라, 근거까지 붙인 제안서와 안내 문자를 대신 작성합니다.</p>
+    <div class="io">
+      <div class="transcript">
+        <span class="label">상담 녹취 (받아쓰기)</span>
+        “실손 갱신되면 보험료 많이 오른다던데 부담돼요. 그리고 애가 셋 살인데 보험을 하나도 안 들어놔서 그것도 알아보고 싶고요…”
+      </div>
+      <div class="ai">
+        <div class="stamp"><b>AI</b><br>자동작성</div>
+        <span class="label">AI가 작성한 제안</span>
+        <h4>정수남 고객님 맞춤 제안</h4>
+        <p><strong>① 우리아이 종합보험</strong> — 자녀가 어릴수록 보험료가 싸고 가입 거절 위험이 낮습니다. 3세는 가입 최적기예요. <em>(월 약 32,000원)</em></p>
+        <p><strong>② 실손 4세대 전환 검토</strong> — 갱신 보험료(현 29,000원) 인상이 부담이시면 4세대(월 13,000원대) 비교가 필요합니다.</p>
+        <div class="msg">
+          <b>안내 문자</b>
+          정수남 고객님 😊 다음 달(7/5) 실손 갱신과 아이 보험, 두 가지 비교안을 준비했어요. 아이 보험은 어릴 때가 가장 유리합니다. 이번 주 편하신 시간 알려주시면 20분만 설명드릴게요!
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="flow">
+    <span class="step-no">한눈에 보기</span>
+    <h2>녹음 한 통이 제안서가 되기까지</h2>
+    <div class="pipe">
+      <div class="node"><div class="n">INPUT</div><div class="t">상담 녹음</div><div class="d">받아쓰기로 텍스트화</div></div>
+      <div class="node ai-node"><div class="n">AI</div><div class="t">정리</div><div class="d">핵심·니즈 추출</div></div>
+      <div class="node"><div class="n">DB</div><div class="t">고객 카드</div><div class="d">태그·갱신일 반영</div></div>
+      <div class="node"><div class="n">AUTO</div><div class="t">자동 분류</div><div class="d">대시보드 집계</div></div>
+      <div class="node ai-node"><div class="n">AI</div><div class="t">제안서·문자</div><div class="d">맞춤 작성</div></div>
+    </div>
+  </section>
+
+  <section class="vs">
+    <span class="step-no">자주 묻는 질문</span>
+    <h2>그래서, 엑셀과 뭐가 다른가요?</h2>
+    <div class="vs-grid">
+      <div class="panel">
+        <h3>엑셀 <span>장부</span></h3>
+        <ul>
+          <li>고객은 <strong>한 줄(행)</strong>로 — 긴 상담 내용은 적기 어려움</li>
+          <li>필터·정렬은 되지만 직접 손이 감</li>
+          <li>제안서·문자는 <strong>전부 직접 타이핑</strong></li>
+        </ul>
+      </div>
+      <div class="panel now">
+        <h3>이 시스템 <span>장부 + AI 비서</span></h3>
+        <ul>
+          <li>고객은 <strong>한 페이지</strong>로 — 상담·메모·기록을 자유롭게</li>
+          <li>태그만 달면 <strong>자동 분류</strong></li>
+          <li>제안서·문자를 <strong>AI가 대신 작성</strong> ← 엑셀은 못 하는 일</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <footer>
+    <div class="safe">
+      <span class="ic">🔒</span>
+      <div>
+        <h3>고객 정보는 내 컴퓨터에 머뭅니다</h3>
+        <p>이 시스템은 보험사 사이트에 자동 접속하지 않고, 설계사 본인이 직접 확인한 정보만 내 PC에 저장합니다. 상담 녹음은 사전 동의 후 진행하세요.</p>
+      </div>
+    </div>
+    <p class="colophon">made with Obsidian + Claude · 코딩 없이 · 보험 설계사를 위한 영업 자동화</p>
+  </footer>
+
+</div>
+
+</html>
