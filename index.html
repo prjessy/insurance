@@ -311,6 +311,18 @@
   .dg-scard .do { font-size: 12px; color: var(--muted); margin-top: 3px; }
   @media (max-width: 440px) { .dg-scards { grid-template-columns: 1fr; } .dg-icon { display: none; } }
 
+  /* ---- prompt examples ---- */
+  .prompts { padding: 56px 0; border-top: 1px solid var(--line); }
+  .pcards { display: grid; grid-template-columns: 1fr; gap: 16px; margin-top: 24px; }
+  @media (min-width: 760px) { .pcards { grid-template-columns: 1fr 1fr; } }
+  .pcard { background: var(--paper); border: 1px solid var(--line); border-radius: 8px; overflow: hidden; display: flex; flex-direction: column; }
+  .phead { font-weight: 800; font-size: 16px; padding: 14px 18px; border-bottom: 1px solid var(--line); display: flex; align-items: center; gap: 9px; }
+  .pnum { color: var(--accent); font-family: var(--serif); font-size: 19px; }
+  .pbox { margin: 0; flex: 1; background: #1F2723; color: #E8EBE2; font-family: var(--mono); font-size: 12.5px; line-height: 1.7; padding: 16px 18px; white-space: pre-wrap; word-break: break-word; }
+  .pbox .ph { color: #f0c97a; }
+  .ptip { margin-top: 22px; font-size: 13.5px; color: var(--muted); border-left: 3px solid var(--teal); padding-left: 13px; }
+  .ptip code { font-family: var(--mono); color: var(--teal); }
+
   @media (prefers-reduced-motion: reduce) {
     .anim, .row.in { animation: none !important; }
   }
@@ -393,6 +405,54 @@
         </div>
       </div>
     </div>
+  </section>
+
+  <section class="prompts">
+    <span class="step-no">프롬프트 예제</span>
+    <h2>AI에게는 이렇게 시킵니다</h2>
+    <p class="lead">어려운 명령어가 아니라 <strong>평범한 한국어</strong>예요. 아래 문장을 Claude에 붙여넣기만 하면 됩니다.</p>
+    <div class="pcards">
+      <div class="pcard">
+        <div class="phead"><span class="pnum">①</span> 상담 정리</div>
+        <pre class="pbox">아래 상담 녹취를 읽고
+[핵심요약 / 고객니즈 / 추천태그 / 다음액션]
+형식으로 정리해줘. 내가 준 정보만 써.
+
+"""
+<span class="ph">(녹취 텍스트 붙여넣기)</span>
+"""</pre>
+      </div>
+      <div class="pcard">
+        <div class="phead"><span class="pnum">②</span> 맞춤 제안서</div>
+        <pre class="pbox">[고객정보]와 [상품목록]을 보고
+이 고객에게 맞는 제안서를 써줘.
+· 1~2개 추천 + 근거 한 줄
+· 보장·보험료 비교 표
+· 부드러운 권유 문구
+
+<span class="ph">(고객DB · 상품DB 붙여넣기)</span></pre>
+      </div>
+      <div class="pcard">
+        <div class="phead"><span class="pnum">③</span> 안내 문자</div>
+        <pre class="pbox">아래 고객에게 보낼 문자를 써줘.
+· 유형 태그에 맞는 톤
+· 3~4문장, 부담 없이
+· 과장·확정 표현 금지
+
+<span class="ph">(고객DB 붙여넣기)</span></pre>
+      </div>
+      <div class="pcard">
+        <div class="phead"><span class="pnum">④</span> 자료 → 카드 변환</div>
+        <pre class="pbox">이 엑셀/자료를 우리 카드 형식으로
+정리해줘.
+(이름·연락처·가족·갱신일·태그)
+
+"""
+<span class="ph">(엑셀 복사 붙여넣기)</span>
+"""</pre>
+      </div>
+    </div>
+    <p class="ptip">💡 더 자세한 프롬프트는 볼트의 <code>프롬프트.md</code> 파일에 들어 있어요. 별도 비용 없이 Claude 앱·Claude Code에 붙여 쓰면 됩니다.</p>
   </section>
 
   <section class="diagram">
