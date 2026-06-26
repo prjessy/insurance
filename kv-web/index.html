@@ -10,12 +10,13 @@
 <body>
 <div class="wrap">
   <header>
-    <h1>보험 영업 AI 도우미 <span class="badge">웹 버전</span></h1>
-    <p>Python 없이 브라우저만 — 수집 · 대시보드 · 검색 · Claude 프롬프트 · MD 내보내기</p>
+    <h1>AI 자료 도우미 <span class="badge" id="profile-badge">웹 버전</span></h1>
+    <p>각종 자료 → MD · 검색 · <b>AI 질문(자료 기반 자동 답변)</b> · 대시보드 · 프롬프트</p>
   </header>
 
   <nav class="tabs">
     <button class="active" data-tab="home">🏠 시작</button>
+    <button data-tab="ask">💬 AI 질문</button>
     <button data-tab="dashboard">📊 대시보드</button>
     <button data-tab="collect">📥 수집</button>
     <button data-tab="search">🔍 검색</button>
@@ -53,6 +54,16 @@
       <div>→</div>
       <div><small>TO-BE</small><b style="color:var(--teal)">6분</b>/고객</div>
     </div>
+  </section>
+
+  <!-- AI 질문 -->
+  <section id="panel-ask" class="panel">
+    <h2>💬 AI 질문 — 내 자료 기반 답변</h2>
+    <p class="hint">질문하면 내 자료(고객DB·상담기록·문서)를 검색해 <b>근거와 함께 자동으로 답변</b>합니다. <span id="ask-llm-state" class="badge" style="background:#888">LLM 확인중</span></p>
+    <textarea id="ask-input" placeholder="예: 정수남 고객 갱신 상황과 추천 액션 알려줘" style="min-height:70px"></textarea>
+    <button class="btn accent" id="btn-ask">질문하기</button>
+    <div id="ask-answer" style="display:none;margin-top:14px"></div>
+    <div id="ask-sources"></div>
   </section>
 
   <!-- 대시보드 -->

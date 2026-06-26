@@ -159,6 +159,12 @@ def cmd_ask(args: argparse.Namespace) -> None:
         print("-> AI작업큐에서 열고 Claude에 붙여넣기 (로컬 LLM 켜면 자동 답변)")
 
 
+def cmd_serve(args: argparse.Namespace) -> None:
+    from kv.webserver import serve
+
+    serve(port=args.port, open_browser=not args.no_browser)
+
+
 def cmd_llm(args: argparse.Namespace) -> None:
     from kv.llm import (
         _base_url,
@@ -294,6 +300,11 @@ def main(argv: list[str] | None = None) -> int:
     p_llm = sub.add_parser("llm", help="로컬 LLM(Ollama) 연결 확인/테스트")
     p_llm.add_argument("prompt", nargs="?", default="", help="테스트 프롬프트(선택)")
     p_llm.set_defaults(func=cmd_llm)
+
+    p_serve = sub.add_parser("serve", help="웹 UI 실행 (LLM·프로파일·검색 연동)")
+    p_serve.add_argument("--port", type=int, default=8765)
+    p_serve.add_argument("--no-browser", action="store_true", help="브라우저 자동 열기 끄기")
+    p_serve.set_defaults(func=cmd_serve)
 
     p_counsel = sub.add_parser("counsel", help="녹취/전사 -> 상담기록 + 프롬프트팩")
     p_counsel.add_argument("--customer", "-c", required=True, help="고객명 (고객DB 파일명)")

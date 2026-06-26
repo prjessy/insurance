@@ -519,9 +519,85 @@ document.getElementById("import-json").onchange = async e => {
   toast("백업 복원 완료");
 };
 
+// --- 프로파일(카테고리) 배지 ---
+async function loadProfile() {
+  try {
+    const p = await fetch("/api/profile").then(r => r.json());
+    if (p && p.name) {
+      const b = document.getElementById("profile-badge");
+      if (b) b.textContent = `${p.category || ""} · ${p.name}`;
+    }
+  } catch { /* 정적 서버면 무시 */ }
+}
+
+// --- AI 질문 (LLM 자동 답변) ---
+async function checkAskLLM() {
+  const el = document.getElementById("ask-llm-state");
+  if (!el) return;
+  try {
+    const h = await fetch("/api/health").then(r => r.json());
+    if (h.llm_available) {
+      el.textContent = `🤖 자동답변 ON (${h.model || "LLM"})`;
+      el.style.background = "var(--teal)";
+    } else {
+      el.textContent = "붙여넣기 모드 (LLM 꺼짐)";
+      el.style.background = "#888";
+    }
+  } catch {
+    el.textContent = "API 없음 — 'python -m kv serve' 로 실행하세요";
+    el.style.background = "#c0392b";
+  }
+}
+
+function renderAnswer(text) {
+  const safe = esc(text || "").replace(/\*\*(.+?)\*\*/g, "<b>$1</b>").replace(/\n/g, "<br>");
+  return `<div class="prompt-box" style="white-space:normal;line-height:1.6">${safe}</div>`;
+}
+
+async function doAsk() {
+  const q = document.getElementById("ask-input").value.trim();
+  if (!q) { toast("질문을 입력하세요"); return; }
+  const ansEl = document.getElementById("ask-answer");
+  const srcEl = document.getElementById("ask-sources");
+  ansEl.style.display = "block";
+  ansEl.innerHTML = '<p class="hint">⏳ 자료 검색 + 답변 생성 중…</p>';
+  srcEl.innerHTML = "";
+  try {
+    const res = await fetch("/api/ask", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ question: q, top: 5 }),
+    });
+    const data = await res.json();
+    if (!res.ok) { ansEl.innerHTML = `<p class="hint">오류: ${esc(data.error || "")}</p>`; return; }
+    if (data.answer) {
+      ansEl.innerHTML = "<h3>🤖 자동 답변</h3>" + renderAnswer(data.answer);
+    } else {
+      ansEl.innerHTML = '<p class="hint">LLM이 꺼져 있어 답변이 없습니다. 검색된 자료를 참고하거나 AI작업큐 프롬프트를 Claude에 붙여넣으세요.</p>';
+    }
+    const hits = data.hits || [];
+    srcEl.innerHTML = hits.length ? "<h3 style='margin-top:16px'>📎 참고 자료</h3>" + hits.map(h => `
+      <div class="search-hit">
+        <h4>${esc(h.title)}</h4>
+        <div class="snip">${esc(h.snippet || "")}</div>
+      </div>`).join("") : "";
+  } catch (e) {
+    ansEl.innerHTML = `<p class="hint">API 연결 실패 — <code>python -m kv serve</code> 로 실행해야 AI 질문이 동작합니다.</p>`;
+  }
+}
+
+const askBtn = document.getElementById("btn-ask");
+if (askBtn) askBtn.onclick = doAsk;
+const askInput = document.getElementById("ask-input");
+if (askInput) askInput.addEventListener("keydown", e => {
+  if (e.key === "Enter" && (e.ctrlKey || e.metaKey)) doAsk();
+});
+
 await loadDocs();
 await loadDemoCustomers();
 await checkServer();
+await loadProfile();
+await checkAskLLM();
 updateStats();
 renderRecent();
 renderPain();
