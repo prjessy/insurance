@@ -61,15 +61,33 @@ def ask_pack(question: str, top_k: int = 5, max_chars: int = 1500) -> tuple[Path
 {context}
 """
 
+    # 로컬 LLM 이 켜져 있으면 즉시 답변 생성 (없으면 붙여넣기용 프롬프트만)
+    from kv.llm import generate, llm_available
+
+    answer = generate(prompt) if llm_available() else None
+
+    answer_block = ""
+    if answer:
+        answer_block = f"""## 🤖 자동 답변 (로컬 LLM)
+
+{answer}
+
+---
+
+"""
+
     body = f"""---
 tags: [AI작업큐, painpoint/질의응답]
 question: {question}
 created: {datetime.now().isoformat()}
+answered_by: {"local-llm" if answer else "claude-paste"}
 ---
 
-# Claude 붙여넣기 — 내 자료 질의응답
+# 내 자료 질의응답
 
-> 검색된 자료 {len(hits)}건을 근거로 답변 (로컬 검색 + Claude, API 비용 0)
+> 검색된 자료 {len(hits)}건을 근거로 답변 (로컬 검색, API 비용 0)
+
+{answer_block}## Claude 붙여넣기용 프롬프트 (로컬 LLM 미사용 시)
 
 ```
 {prompt}
@@ -80,4 +98,4 @@ created: {datetime.now().isoformat()}
     queue.mkdir(parents=True, exist_ok=True)
     out = queue / f"{datetime.now().strftime('%Y%m%d_%H%M')}_질문_{_slug(question)}.md"
     out.write_text(body, encoding="utf-8")
-    return out, hits
+    return out, hits, answer

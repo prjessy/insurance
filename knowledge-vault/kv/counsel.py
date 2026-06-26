@@ -21,6 +21,34 @@ def vault_root() -> Path:
     return resolve_vault_path(cfg["obsidian_vault"])
 
 
+def _auto_summary(text: str, entity: str, entity_db: str) -> str | None:
+    """로컬 LLM 으로 전사 요약. 미사용/실패 시 None."""
+    from kv.llm import generate, llm_available
+
+    if not llm_available():
+        return None
+    prompt = f"""너는 상담 정리 비서야. 아래 전사 내용을 다음 형식의 마크다운으로만 정리해줘.
+입력에 있는 정보만 사용하고 추측하지 마.
+
+# 핵심 요약
+- (3줄 이내)
+
+# {entity} 니즈 / 발언
+-
+
+# 파악된 정보 (→ {entity_db} 반영)
+-
+
+# 다음 액션
+- [ ]
+
+[전사 내용]
+\"\"\"
+{text.strip()}
+\"\"\""""
+    return generate(prompt)
+
+
 def counsel_from_text(text: str, customer: str, channel: str = "대면") -> Path:
     today = date.today().isoformat()
     safe_name = customer.replace("/", "-").strip()
@@ -41,7 +69,12 @@ def counsel_from_text(text: str, customer: str, channel: str = "대면") -> Path
         "next_step": "Claude에 정리 프롬프트 붙여넣기 -> python -m kv pack counsel",
     }
 
-    body = f"""# 핵심 요약
+    # 로컬 LLM 이 켜져 있으면 요약을 자동 생성 (없으면 붙여넣기 안내)
+    summary = _auto_summary(text, entity, entity_db)
+    if summary:
+        fm["status"] = "llm_summarized"
+
+    head = summary or f"""# 핵심 요약
 - (AI 정리 대기 — 아래 프롬프트 팩을 Claude에 붙여넣으세요)
 
 # {entity} 니즈 / 발언
@@ -51,7 +84,9 @@ def counsel_from_text(text: str, customer: str, channel: str = "대면") -> Path
 -
 
 # 다음 액션
-- [ ]
+- [ ]"""
+
+    body = f"""{head}
 
 ---
 

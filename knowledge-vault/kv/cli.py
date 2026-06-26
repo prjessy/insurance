@@ -146,12 +146,34 @@ def cmd_pain(_: argparse.Namespace) -> None:
 def cmd_ask(args: argparse.Namespace) -> None:
     from kv.ask import ask_pack
 
-    out, hits = ask_pack(args.question, top_k=args.top)
+    out, hits, answer = ask_pack(args.question, top_k=args.top)
     print(f"검색된 자료 {len(hits)}건:")
     for i, h in enumerate(hits, 1):
         print(f"  [{i}] {h.title}")
-    print(f"\n질의응답 프롬프트 팩: {out}")
-    print("-> AI작업큐에서 열고 Claude에 붙여넣기 (내 자료 기반 답변)")
+    if answer:
+        print("\n🤖 자동 답변 (로컬 LLM):\n")
+        print(answer)
+        print(f"\n저장: {out}")
+    else:
+        print(f"\n질의응답 프롬프트 팩: {out}")
+        print("-> AI작업큐에서 열고 Claude에 붙여넣기 (로컬 LLM 켜면 자동 답변)")
+
+
+def cmd_llm(args: argparse.Namespace) -> None:
+    from kv.llm import generate, llm_available, llm_enabled, _llm_cfg
+
+    cfg = _llm_cfg()
+    print(f"로컬 LLM: enabled={llm_enabled()}  model={cfg.get('model', 'qwen2.5')}  url={cfg.get('base_url', 'http://localhost:11434')}")
+    if not llm_enabled():
+        print("→ config.yaml 의 llm.enabled 를 true 로 바꾸세요. (ollama 설치 + 모델 pull 필요)")
+        return
+    if not llm_available():
+        print("→ Ollama 서버에 연결할 수 없습니다. `ollama serve` 가 떠 있는지 확인하세요.")
+        return
+    print("→ 연결 OK")
+    if args.prompt:
+        print("\n응답:\n")
+        print(generate(args.prompt) or "(응답 없음)")
 
 
 def cmd_profiles(_: argparse.Namespace) -> None:
@@ -256,10 +278,14 @@ def main(argv: list[str] | None = None) -> int:
     p_profiles = sub.add_parser("profiles", help="산업 프로파일 목록/현재 설정 보기")
     p_profiles.set_defaults(func=cmd_profiles)
 
-    p_ask = sub.add_parser("ask", help="내 자료 기반 질의응답 프롬프트 팩 생성")
+    p_ask = sub.add_parser("ask", help="내 자료 기반 질의응답 (로컬 LLM 자동/Claude 붙여넣기)")
     p_ask.add_argument("question", help="질문")
     p_ask.add_argument("--top", type=int, default=5, help="참고할 자료 수")
     p_ask.set_defaults(func=cmd_ask)
+
+    p_llm = sub.add_parser("llm", help="로컬 LLM(Ollama) 연결 확인/테스트")
+    p_llm.add_argument("prompt", nargs="?", default="", help="테스트 프롬프트(선택)")
+    p_llm.set_defaults(func=cmd_llm)
 
     p_counsel = sub.add_parser("counsel", help="녹취/전사 -> 상담기록 + 프롬프트팩")
     p_counsel.add_argument("--customer", "-c", required=True, help="고객명 (고객DB 파일명)")

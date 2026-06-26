@@ -70,6 +70,17 @@ inbox_guide:
 # 문서 변환 백엔드: MarkItDown(설치 시) 우선, 미설치/실패 시 자체 변환기로 폴백
 use_markitdown: true
 
+# === 로컬 LLM (Ollama) ===
+# enabled: true 로 켜면 kv ask/counsel 이 로컬에서 자동 답변·요약 (API 비용 0, 오프라인).
+# 끄면 기존 'Claude 붙여넣기' 방식으로 동작.
+#   사전 준비:  ollama 설치 → `ollama pull qwen2.5`  (또는 exaone3.5, gemma2 등)
+llm:
+  enabled: false
+  base_url: "http://localhost:11434"
+  model: "qwen2.5"
+  timeout: 120
+  # system: "너는 간결한 한국어 비서야."
+
 refined_tag: 상태/정제완료
 index_db: index/search.db
 watch_inbox: true
