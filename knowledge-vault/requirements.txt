@@ -10,6 +10,9 @@ pypdf>=4.0.0
 python-pptx>=0.6.23
 olefile>=0.46
 
+# 통합 문서 변환 백엔드 (선택, 권장) — 설치 시 문서를 이걸로 우선 변환
+markitdown>=0.0.1a2
+
 # Whisper (하나만 설치해도 됨 — faster-whisper 권장)
 faster-whisper>=1.0.0
 # openai-whisper

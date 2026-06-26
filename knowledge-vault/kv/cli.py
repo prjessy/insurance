@@ -143,6 +143,17 @@ def cmd_pain(_: argparse.Namespace) -> None:
     print_painpoints()
 
 
+def cmd_ask(args: argparse.Namespace) -> None:
+    from kv.ask import ask_pack
+
+    out, hits = ask_pack(args.question, top_k=args.top)
+    print(f"검색된 자료 {len(hits)}건:")
+    for i, h in enumerate(hits, 1):
+        print(f"  [{i}] {h.title}")
+    print(f"\n질의응답 프롬프트 팩: {out}")
+    print("-> AI작업큐에서 열고 Claude에 붙여넣기 (내 자료 기반 답변)")
+
+
 def cmd_profiles(_: argparse.Namespace) -> None:
     from kv.config import available_profiles, load_config, load_profile
 
@@ -244,6 +255,11 @@ def main(argv: list[str] | None = None) -> int:
 
     p_profiles = sub.add_parser("profiles", help="산업 프로파일 목록/현재 설정 보기")
     p_profiles.set_defaults(func=cmd_profiles)
+
+    p_ask = sub.add_parser("ask", help="내 자료 기반 질의응답 프롬프트 팩 생성")
+    p_ask.add_argument("question", help="질문")
+    p_ask.add_argument("--top", type=int, default=5, help="참고할 자료 수")
+    p_ask.set_defaults(func=cmd_ask)
 
     p_counsel = sub.add_parser("counsel", help="녹취/전사 -> 상담기록 + 프롬프트팩")
     p_counsel.add_argument("--customer", "-c", required=True, help="고객명 (고객DB 파일명)")

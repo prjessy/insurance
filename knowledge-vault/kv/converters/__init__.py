@@ -7,6 +7,10 @@ from kv.converters.base import BaseConverter
 from kv.converters.excel_conv import ExcelConverter
 from kv.converters.hwp import HwpConverter
 from kv.converters.image import ImageConverter
+from kv.converters.markitdown_conv import (
+    MarkItDownConverter,
+    markitdown_available,
+)
 from kv.converters.notes import NotesConverter
 from kv.converters.pdf import PdfConverter
 from kv.converters.pptx_conv import PptxConverter
@@ -32,7 +36,23 @@ INBOX_TYPE_MAP = {
 }
 
 
+def _markitdown_preferred(path: Path) -> BaseConverter | None:
+    """설정(use_markitdown, 기본 True)이 켜져 있고 설치돼 있으면 문서는 MarkItDown 으로."""
+    from kv.config import load_config
+
+    if not load_config().get("use_markitdown", True):
+        return None
+    if path.suffix.lower() not in MarkItDownConverter.extensions:
+        return None
+    if not markitdown_available():
+        return None
+    return MarkItDownConverter()
+
+
 def converter_for(path: Path, inbox_root: Path | None = None) -> BaseConverter | None:
+    mid = _markitdown_preferred(path)
+    if mid:
+        return mid
     if inbox_root:
         try:
             rel = path.relative_to(inbox_root)
