@@ -711,6 +711,20 @@ if (homeAdd) homeAdd.onclick = () => {
   if (fi) fi.click();   // 같은 클릭 제스처 안에서 파일 선택창 열기
 };
 
+// 데이터 초기화
+const cleanBtn = document.getElementById("btn-clean");
+if (cleanBtn) cleanBtn.onclick = async () => {
+  if (!confirm("변환물·검색·작업큐를 모두 지웁니다. 계속할까요?")) return;
+  const log = document.getElementById("clean-log");
+  log.textContent = " ⏳ 초기화 중…";
+  try {
+    const r = await fetch("/api/clean", { method: "POST", headers: { "Content-Type": "application/json" }, body: "{}" });
+    const d = await r.json();
+    log.textContent = d.ok ? ` ✅ 초기화 완료 (${d.removed}개 폴더)` : ` 오류: ${d.error || ""}`;
+    await loadServerDashboard();
+  } catch { log.textContent = " API 연결 실패"; }
+};
+
 const askBtn = document.getElementById("btn-ask");
 if (askBtn) askBtn.onclick = doAsk;
 const askInput = document.getElementById("ask-input");

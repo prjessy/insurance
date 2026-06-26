@@ -2,7 +2,7 @@
 # 도메인 용어/폴더명을 결정. profiles/<name>.yaml 참조.
 #   finance = 금융 / support = 기술지원(기술) / general = 일반(관리)
 # 새 산업은 profiles/ 에 yaml 하나 추가하면 됨.  (python -m kv profiles 로 목록)
-profile: finance
+profile: support
 
 # === Obsidian 본 vault 경로 ===
 # 절대경로 또는 knowledge-vault 기준 상대경로(".." = 레포 루트).

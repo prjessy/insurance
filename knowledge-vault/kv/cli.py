@@ -159,6 +159,19 @@ def cmd_ask(args: argparse.Namespace) -> None:
         print("-> AI작업큐에서 열고 AI에 붙여넣기 (로컬 LLM 켜면 자동 답변)")
 
 
+def cmd_clean(args: argparse.Namespace) -> None:
+    from kv.maintenance import clean
+
+    r = clean(include_queue=True, include_inbox=args.all)
+    print(f"초기화 완료: {len(r['removed'])}개 폴더 삭제·재생성")
+    for p in r["removed"]:
+        print(f"  - {p}")
+    if args.all:
+        print("(inbox 원본도 삭제됨)")
+    else:
+        print("(inbox 원본·고객DB는 유지 — 전체 삭제는 --all)")
+
+
 def cmd_fetch(args: argparse.Namespace) -> None:
     from kv.search import rebuild_index
     from kv.webfetch import fetch_to_inbox
@@ -312,6 +325,10 @@ def main(argv: list[str] | None = None) -> int:
     p_llm = sub.add_parser("llm", help="로컬 LLM(Ollama) 연결 확인/테스트")
     p_llm.add_argument("prompt", nargs="?", default="", help="테스트 프롬프트(선택)")
     p_llm.set_defaults(func=cmd_llm)
+
+    p_clean = sub.add_parser("clean", help="변환물·인덱스·작업큐 초기화 (빈 상태로)")
+    p_clean.add_argument("--all", action="store_true", help="inbox 원본까지 삭제")
+    p_clean.set_defaults(func=cmd_clean)
 
     p_fetch = sub.add_parser("fetch", help="URL 웹페이지를 가져와 MD로 저장·인덱싱")
     p_fetch.add_argument("url", help="가져올 URL (https://...)")

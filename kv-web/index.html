@@ -178,6 +178,11 @@
 
     <h3 style="margin-top:20px">내보내기</h3>
     <button class="btn secondary" data-goto-tab="export">💾 MD / 백업 내보내기</button>
+
+    <h3 style="margin-top:20px">🗑 데이터 초기화</h3>
+    <p class="hint">변환물·검색 인덱스·작업큐를 모두 지워 <b>빈 상태</b>로 되돌립니다. (테스트용) 고객DB 등 참조 데이터는 유지됩니다.</p>
+    <button class="btn" id="btn-clean" style="background:var(--accent)">🗑 전부 초기화</button>
+    <span id="clean-log" class="hint"></span>
   </section>
 
   <!-- 수동 프롬프트 (설정에서 진입) -->
