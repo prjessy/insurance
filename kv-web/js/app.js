@@ -582,6 +582,32 @@ async function loadServerDashboard() {
   } catch { return false; }
 }
 
+// --- 자료 분석 (업로드한 표 자동 요약) ---
+function _fmt(n) { try { return Number(n).toLocaleString(); } catch { return n; } }
+async function loadDataDashboard() {
+  const box = document.getElementById("data-cards");
+  if (!box) return;
+  try {
+    const d = await fetch("/api/datasummary").then(r => r.json());
+    const tables = d.tables || [];
+    if (!tables.length) { box.innerHTML = '<p class="hint">표 자료(엑셀·CSV)를 추가하면 자동 요약이 나타납니다.</p>'; return; }
+    box.innerHTML = tables.map(t => `
+      <div class="step-card" style="margin-bottom:14px">
+        <h3>📄 ${esc(t.file)}</h3>
+        ${t.sheets.map(s => `
+          <div style="margin-top:8px">
+            <div class="hint">시트 "${esc(s.sheet)}" · ${s.rows}행</div>
+            <div class="stats" style="margin-top:8px">
+              ${s.columns.filter(c => c.type === "number").map(c => `
+                <div class="stat"><b>${_fmt(c.sum)}</b>${esc(c.name)} 합계<br><small style="color:var(--muted)">평균 ${_fmt(c.avg)} · 최대 ${_fmt(c.max)}</small></div>`).join("")}
+            </div>
+            ${s.columns.filter(c => c.type === "category").map(c => `
+              <div style="margin-top:6px;font-size:.88rem"><b>${esc(c.name)}</b> <span style="color:var(--muted)">(${c.unique}종)</span>: ${c.top.map(([v, n]) => `${esc(v)}×${n}`).join(", ")}</div>`).join("")}
+          </div>`).join("")}
+      </div>`).join("");
+  } catch { box.innerHTML = '<p class="hint">API 연결 실패 — 서버(웹시작.bat)로 실행해야 합니다.</p>'; }
+}
+
 // --- AI 질문 (LLM 자동 답변) ---
 async function checkAskLLM() {
   const el = document.getElementById("ask-llm-state");
@@ -653,7 +679,8 @@ async function uploadForAsk(file) {
     });
     const d = await r.json();
     if (r.ok && d.ok) {
-      log.innerHTML = `✅ <b>${esc(d.file)}</b> 추가됨 (${d.type}, 인덱스 ${d.indexed}건). 이제 아래에 질문하세요!`;
+      log.innerHTML = `✅ <b>${esc(d.file)}</b> 추가됨 (${d.type}, 인덱스 ${d.indexed}건). 이제 아래에 질문하거나 📈 자료 분석 탭을 보세요!`;
+      loadDataDashboard();
     } else {
       log.textContent = `오류: ${d.error || "변환 실패"}`;
     }
@@ -736,6 +763,9 @@ if (askInput) askInput.addEventListener("keydown", e => {
 document.querySelectorAll('.tabs button[data-tab="dashboard"]').forEach(b => {
   b.addEventListener("click", loadServerDashboard);
 });
+document.querySelectorAll('.tabs button[data-tab="data"]').forEach(b => {
+  b.addEventListener("click", loadDataDashboard);
+});
 // 설정: 카테고리(프로파일) 전환
 const catSel = document.getElementById("settings-category");
 if (catSel) catSel.addEventListener("change", e => setCategory(e.target.value));
@@ -746,6 +776,7 @@ await checkServer();
 await loadProfile();
 await checkAskLLM();
 await loadServerDashboard();
+await loadDataDashboard();
 updateStats();
 renderRecent();
 renderPain();

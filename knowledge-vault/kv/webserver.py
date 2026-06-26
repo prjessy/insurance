@@ -149,6 +149,9 @@ class Handler(BaseHTTPRequestHandler):
             })
         if path == "/api/dashboard":
             return self._json(200, _dashboard())
+        if path == "/api/datasummary":
+            from kv.datadash import summarize
+            return self._json(200, {"tables": summarize()})
         if path == "/api/profile":
             from kv.config import load_config
 
