@@ -5,6 +5,7 @@ from pathlib import Path
 from kv.converters.audio import AudioConverter
 from kv.converters.base import BaseConverter
 from kv.converters.excel_conv import ExcelConverter
+from kv.converters.html_conv import HtmlConverter
 from kv.converters.hwp import HwpConverter
 from kv.converters.image import ImageConverter
 from kv.converters.markitdown_conv import (
@@ -22,6 +23,7 @@ ALL_CONVERTERS: list[BaseConverter] = [
     PdfConverter(),
     PptxConverter(),
     HwpConverter(),
+    HtmlConverter(),
     NotesConverter(),
 ]
 
