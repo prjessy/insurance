@@ -160,20 +160,30 @@ def cmd_ask(args: argparse.Namespace) -> None:
 
 
 def cmd_llm(args: argparse.Namespace) -> None:
-    from kv.llm import generate, llm_available, llm_enabled, _llm_cfg
+    import os
+
+    from kv.llm import _api_key, _llm_cfg, _provider, generate, llm_available, llm_enabled
 
     cfg = _llm_cfg()
-    print(f"로컬 LLM: enabled={llm_enabled()}  model={cfg.get('model', 'qwen2.5')}  url={cfg.get('base_url', 'http://localhost:11434')}")
+    provider = _provider()
+    print(f"LLM: enabled={llm_enabled()}  provider={provider}  model={cfg.get('model') or '(미설정)'}")
+    print(f"  base_url={cfg.get('base_url') or '(미설정)'}")
+    if provider == "openai":
+        env_name = cfg.get("api_key_env", "KV_LLM_API_KEY")
+        has_key = bool(_api_key())
+        print(f"  api_key_env={env_name}  키설정됨={has_key}")
+        if not has_key:
+            print(f"  → 키 설정:  setx {env_name} \"<키>\"  후 새 터미널에서 실행")
     if not llm_enabled():
-        print("→ config.yaml 의 llm.enabled 를 true 로 바꾸세요. (ollama 설치 + 모델 pull 필요)")
+        print("→ config.yaml 의 llm.enabled 를 true 로 바꾸세요.")
         return
     if not llm_available():
-        print("→ Ollama 서버에 연결할 수 없습니다. `ollama serve` 가 떠 있는지 확인하세요.")
+        print("→ 연결 불가. base_url/키/서버 상태를 확인하세요.")
         return
-    print("→ 연결 OK")
+    print("→ 설정 OK")
     if args.prompt:
         print("\n응답:\n")
-        print(generate(args.prompt) or "(응답 없음)")
+        print(generate(args.prompt) or "(응답 없음 — 엔드포인트/모델 확인)")
 
 
 def cmd_profiles(_: argparse.Namespace) -> None:

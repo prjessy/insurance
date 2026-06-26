@@ -70,14 +70,20 @@ inbox_guide:
 # 문서 변환 백엔드: MarkItDown(설치 시) 우선, 미설치/실패 시 자체 변환기로 폴백
 use_markitdown: true
 
-# === 로컬 LLM (Ollama) ===
-# enabled: true 로 켜면 kv ask/counsel 이 로컬에서 자동 답변·요약 (API 비용 0, 오프라인).
-# 끄면 기존 'Claude 붙여넣기' 방식으로 동작.
-#   사전 준비:  ollama 설치 → `ollama pull qwen2.5`  (또는 exaone3.5, gemma2 등)
+# === LLM (로컬 Ollama 또는 외부 OpenAI 호환) ===
+# enabled: true 로 켜면 kv ask/counsel 이 자동 답변·요약. 끄면 'Claude 붙여넣기' 방식.
+# provider:
+#   ollama  → 로컬/원격 Ollama.  base_url 예: http://localhost:11434
+#   openai  → OpenAI 호환(vLLM·LM Studio·사내 게이트웨이·OpenAI 등).
+#             base_url 예: https://api.example.com/v1
+# 보안: API 키는 여기 적지 말고 환경변수(api_key_env)로!  (이 저장소는 공개)
+#   예) PowerShell:  setx KV_LLM_API_KEY "sk-...."   (새 터미널부터 적용)
 llm:
   enabled: false
-  base_url: "http://localhost:11434"
-  model: "qwen2.5"
+  provider: openai          # openai | ollama
+  base_url: ""              # 외부 엔드포인트 URL (예: https://.../v1)
+  model: ""                 # 서버가 기대하는 모델명
+  api_key_env: KV_LLM_API_KEY   # 키를 읽어올 환경변수 이름 (키 값 자체 아님)
   timeout: 120
   # system: "너는 간결한 한국어 비서야."
 
