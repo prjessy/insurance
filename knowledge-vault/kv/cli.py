@@ -159,6 +159,18 @@ def cmd_ask(args: argparse.Namespace) -> None:
         print("-> AI작업큐에서 열고 Claude에 붙여넣기 (로컬 LLM 켜면 자동 답변)")
 
 
+def cmd_fetch(args: argparse.Namespace) -> None:
+    from kv.search import rebuild_index
+    from kv.webfetch import fetch_to_inbox
+
+    info = fetch_to_inbox(args.url)
+    collect_inbox(force=False)
+    refine_all(force=False)
+    n = rebuild_index()
+    print(f"가져옴: {info['title']} ({info['chars']}자) -> inbox/notes")
+    print(f"인덱스 갱신: {n}개 문서. 이제 'python -m kv ask' 로 질문하세요.")
+
+
 def cmd_serve(args: argparse.Namespace) -> None:
     from kv.webserver import serve
 
@@ -300,6 +312,10 @@ def main(argv: list[str] | None = None) -> int:
     p_llm = sub.add_parser("llm", help="로컬 LLM(Ollama) 연결 확인/테스트")
     p_llm.add_argument("prompt", nargs="?", default="", help="테스트 프롬프트(선택)")
     p_llm.set_defaults(func=cmd_llm)
+
+    p_fetch = sub.add_parser("fetch", help="URL 웹페이지를 가져와 MD로 저장·인덱싱")
+    p_fetch.add_argument("url", help="가져올 URL (https://...)")
+    p_fetch.set_defaults(func=cmd_fetch)
 
     p_serve = sub.add_parser("serve", help="웹 UI 실행 (LLM·프로파일·검색 연동)")
     p_serve.add_argument("--port", type=int, default=8765)

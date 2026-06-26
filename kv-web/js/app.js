@@ -586,6 +586,74 @@ async function doAsk() {
   }
 }
 
+// 자료 업로드 → 서버에서 변환·인덱싱 → 바로 질문 가능
+async function uploadForAsk(file) {
+  const log = document.getElementById("ask-upload-log");
+  log.textContent = `⏳ "${file.name}" 변환·인덱싱 중…`;
+  try {
+    const dataUrl = await new Promise((res, rej) => {
+      const fr = new FileReader();
+      fr.onload = () => res(fr.result);
+      fr.onerror = rej;
+      fr.readAsDataURL(file);
+    });
+    const r = await fetch("/api/collect", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ filename: file.name, data_base64: dataUrl }),
+    });
+    const d = await r.json();
+    if (r.ok && d.ok) {
+      log.innerHTML = `✅ <b>${esc(d.file)}</b> 추가됨 (${d.type}, 인덱스 ${d.indexed}건). 이제 아래에 질문하세요!`;
+    } else {
+      log.textContent = `오류: ${d.error || "변환 실패"}`;
+    }
+  } catch (e) {
+    log.innerHTML = "API 연결 실패 — <code>python -m kv serve</code> (또는 웹시작.bat)로 실행해야 합니다.";
+  }
+}
+
+const askDrop = document.getElementById("ask-drop");
+const askFile = document.getElementById("ask-file");
+if (askDrop && askFile) {
+  askDrop.onclick = () => askFile.click();
+  askDrop.ondragover = e => { e.preventDefault(); askDrop.classList.add("drag"); };
+  askDrop.ondragleave = () => askDrop.classList.remove("drag");
+  askDrop.ondrop = async e => {
+    e.preventDefault(); askDrop.classList.remove("drag");
+    for (const f of e.dataTransfer.files) await uploadForAsk(f);
+  };
+  askFile.onchange = async () => {
+    for (const f of askFile.files) await uploadForAsk(f);
+    askFile.value = "";
+  };
+}
+
+// URL 가져오기 → 변환·인덱싱
+async function fetchUrl() {
+  const url = document.getElementById("ask-url").value.trim();
+  const log = document.getElementById("ask-upload-log");
+  if (!url) { toast("URL을 입력하세요"); return; }
+  log.textContent = `⏳ "${url}" 가져오는 중…`;
+  try {
+    const r = await fetch("/api/fetch-url", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ url }),
+    });
+    const d = await r.json();
+    if (r.ok && d.ok) {
+      log.innerHTML = `✅ <b>${esc(d.title)}</b> 가져옴 (${d.chars}자, 인덱스 ${d.indexed}건). 이제 질문하세요!`;
+    } else {
+      log.textContent = `오류: ${d.error || "가져오기 실패"}`;
+    }
+  } catch (e) {
+    log.innerHTML = "API 연결 실패 — 서버(웹시작.bat)로 실행해야 합니다.";
+  }
+}
+const fetchBtn = document.getElementById("btn-fetch-url");
+if (fetchBtn) fetchBtn.onclick = fetchUrl;
+
 const askBtn = document.getElementById("btn-ask");
 if (askBtn) askBtn.onclick = doAsk;
 const askInput = document.getElementById("ask-input");

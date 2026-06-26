@@ -60,6 +60,16 @@
   <section id="panel-ask" class="panel">
     <h2>💬 AI 질문 — 내 자료 기반 답변</h2>
     <p class="hint">질문하면 내 자료(고객DB·상담기록·문서)를 검색해 <b>근거와 함께 자동으로 답변</b>합니다. <span id="ask-llm-state" class="badge" style="background:#888">LLM 확인중</span></p>
+    <div class="drop" id="ask-drop" style="padding:14px;margin-bottom:10px">
+      📎 자료 추가 — 엑셀·PDF·문서·메모를 여기에 드래그 (변환+인덱싱 후 바로 질문 가능)
+      <br><small>또는 클릭해서 선택</small>
+    </div>
+    <input type="file" id="ask-file" hidden accept=".xlsx,.xls,.csv,.tsv,.pdf,.pptx,.hwp,.hwpx,.txt,.md,.docx,.png,.jpg,.jpeg">
+    <div style="display:flex;gap:6px;margin-bottom:8px">
+      <input type="url" id="ask-url" placeholder="🌐 또는 URL 입력 — 웹페이지를 가져와 분석 (https://...)" style="flex:1">
+      <button class="btn secondary" id="btn-fetch-url">가져오기</button>
+    </div>
+    <div id="ask-upload-log" class="hint" style="margin-bottom:8px"></div>
     <textarea id="ask-input" placeholder="예: 정수남 고객 갱신 상황과 추천 액션 알려줘" style="min-height:70px"></textarea>
     <button class="btn accent" id="btn-ask">질문하기</button>
     <div id="ask-answer" style="display:none;margin-top:14px"></div>

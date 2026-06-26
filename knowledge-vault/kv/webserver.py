@@ -21,6 +21,24 @@ from kv.config import ROOT, available_profiles, load_profile
 
 WEB_DIR = (ROOT.parent / "kv-web").resolve()
 
+_AUDIO = {".mp3", ".wav", ".m4a", ".ogg", ".flac", ".webm"}
+_IMAGE = {".png", ".jpg", ".jpeg", ".gif", ".bmp", ".webp", ".tiff"}
+_EXCEL = {".xlsx", ".xlsm", ".xltx", ".xls", ".csv", ".tsv"}
+_DOCS = {".pdf", ".pptx", ".ppt", ".hwp", ".hwpx"}
+
+
+def _inbox_subdir(ext: str) -> str:
+    ext = ext.lower()
+    if ext in _AUDIO:
+        return "audio"
+    if ext in _IMAGE:
+        return "images"
+    if ext in _EXCEL:
+        return "excel"
+    if ext in _DOCS:
+        return "documents"
+    return "notes"
+
 
 class Handler(BaseHTTPRequestHandler):
     def _json(self, code: int, obj: dict) -> None:
@@ -80,6 +98,50 @@ class Handler(BaseHTTPRequestHandler):
                 "hits": [{"title": h.title, "path": h.path, "snippet": h.snippet} for h in hits],
                 "file": str(out),
             })
+        if path == "/api/collect":
+            import base64
+
+            from kv.config import INBOX
+
+            fn = (data.get("filename") or "").strip().replace("/", "_").replace("\\", "_")
+            b64 = data.get("data_base64") or ""
+            if not fn or not b64:
+                return self._json(400, {"error": "filename / data_base64 가 필요합니다."})
+            try:
+                raw = base64.b64decode(b64.split(",")[-1])
+            except Exception:
+                return self._json(400, {"error": "파일 디코딩 실패"})
+            sub = _inbox_subdir(Path(fn).suffix)
+            dest = INBOX / sub / fn
+            dest.parent.mkdir(parents=True, exist_ok=True)
+            dest.write_bytes(raw)
+
+            from kv.ingest import collect_inbox
+            from kv.refine import refine_all
+            from kv.search import rebuild_index
+
+            collect_inbox(force=False)
+            refine_all(force=False)
+            n = rebuild_index()
+            return self._json(200, {"ok": True, "file": fn, "type": sub, "indexed": n})
+        if path == "/api/fetch-url":
+            url = (data.get("url") or "").strip()
+            if not url:
+                return self._json(400, {"error": "url 이 필요합니다."})
+            from kv.ingest import collect_inbox
+            from kv.refine import refine_all
+            from kv.search import rebuild_index
+            from kv.webfetch import fetch_to_inbox
+
+            try:
+                info = fetch_to_inbox(url)
+            except Exception as e:
+                return self._json(400, {"error": f"가져오기 실패: {e}"})
+            collect_inbox(force=False)
+            refine_all(force=False)
+            n = rebuild_index()
+            return self._json(200, {"ok": True, "title": info["title"],
+                                    "chars": info["chars"], "indexed": n})
         if path == "/api/search":
             q = (data.get("query") or "").strip()
             if not q:
