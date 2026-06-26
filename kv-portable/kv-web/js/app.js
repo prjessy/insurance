@@ -383,25 +383,30 @@ function updateCustomerSelect() {
   });
 }
 
-function buildPack(mode) {
-  const custName = document.getElementById("customer-select").value;
+async function buildPack(mode) {
+  const sel = document.getElementById("customer-select");
+  const target = (sel && sel.value) || "";
   const transcript = document.getElementById("transcript-input").value;
-  let text = "";
-  if (mode === "counsel") {
-    text = PROMPTS.counsel.replace("{{TRANSCRIPT}}", transcript || "(전사 없음)");
-  } else if (mode === "propose") {
-    if (!custName) return toast("고객을 선택하세요");
-    text = PROMPTS.propose.replace("{{CUSTOMER}}", customers[custName] || "").replace("{{PRODUCTS}}", products || "(상품DB 없음)");
-  } else if (mode === "message") {
-    if (!custName) return toast("고객을 선택하세요");
-    text = PROMPTS.message.replace("{{CUSTOMER}}", customers[custName] || "");
-  }
+  if (mode !== "counsel" && !target) return toast("고객을 선택하세요");
   const out = document.getElementById("prompt-output");
-  out.innerHTML = `<h3>Claude에 복사하세요</h3><div class="prompt-box" id="pack-text">${esc(text)}</div><button class="btn" id="btn-copy">📋 복사</button>`;
-  document.getElementById("btn-copy").onclick = () => {
-    navigator.clipboard.writeText(text);
-    toast("클립보드에 복사됨");
-  };
+  out.innerHTML = '<p class="hint">⏳ 생성 중…</p>';
+  try {
+    const r = await fetch("/api/pack", {
+      method: "POST", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ mode, target, transcript }),
+    });
+    const d = await r.json();
+    if (!r.ok) { out.innerHTML = `<p class="hint">오류: ${esc(d.error || "")}</p>`; return; }
+    if (d.answer) {
+      out.innerHTML = `<h3>🤖 자동 생성 (LLM)</h3>` + renderAnswer(d.answer);
+    } else {
+      out.innerHTML = `<h3>프롬프트 — 외부 AI에 복사</h3><div class="prompt-box" id="pack-text">${esc(d.prompt)}</div><button class="btn" id="btn-copy">📋 복사</button>`;
+      const cp = document.getElementById("btn-copy");
+      if (cp) cp.onclick = () => { navigator.clipboard.writeText(d.prompt); toast("복사됨"); };
+    }
+  } catch {
+    out.innerHTML = '<p class="hint">API 연결 실패 — 서버(웹시작.bat)로 실행해야 합니다.</p>';
+  }
 }
 
 function esc(s) { return s.replace(/&/g,"&amp;").replace(/</g,"&lt;"); }
@@ -428,7 +433,9 @@ function renderRecent() {
 }
 
 function renderPain() {
-  document.getElementById("pain-grid").innerHTML = PAIN_POINTS.map(p => `
+  const grid = document.getElementById("pain-grid");
+  if (!grid) return;
+  grid.innerHTML = PAIN_POINTS.map(p => `
     <div class="pain-card">
       <h3>${p.chip}</h3>
       <div class="time">${p.asis} → <b style="color:var(--teal)">${p.tobe}</b></div>
@@ -482,16 +489,17 @@ fileInput.onchange = async () => {
   toast("수집 완료");
 };
 
-document.getElementById("btn-pick-vault").onclick = loadVaultDir;
-document.getElementById("btn-home-vault").onclick = loadVaultDir;
+const _on = (id, fn) => { const el = document.getElementById(id); if (el) el.onclick = fn; };
+_on("btn-pick-vault", loadVaultDir);
+_on("btn-home-vault", loadVaultDir);
 document.querySelectorAll("[data-goto-tab]").forEach(btn => {
   btn.onclick = () => switchTab(btn.dataset.gotoTab);
 });
-document.getElementById("btn-paste-transcript").onclick = () => {
+_on("btn-paste-transcript", () => {
   switchTab("prompt");
-  document.getElementById("transcript-input").focus();
-};
-document.getElementById("btn-whisper").onclick = whisperCounsel;
+  document.getElementById("transcript-input")?.focus();
+});
+_on("btn-whisper", whisperCounsel);
 
 document.getElementById("search-input").oninput = e => {
   const hits = searchDocs(e.target.value);
@@ -519,15 +527,34 @@ document.getElementById("import-json").onchange = async e => {
   toast("백업 복원 완료");
 };
 
-// --- 프로파일(카테고리) 배지 ---
+// --- 프로파일(카테고리) ---
 async function loadProfile() {
   try {
     const p = await fetch("/api/profile").then(r => r.json());
-    if (p && p.name) {
-      const b = document.getElementById("profile-badge");
-      if (b) b.textContent = `${p.category || ""} · ${p.name}`;
-    }
+    if (!p || !p.category) return;
+    const b = document.getElementById("profile-badge");
+    if (b) b.textContent = p.category;            // 배지는 카테고리만 (중복 제거)
+    const sp = document.getElementById("settings-profile");
+    const f = p.folders || {};
+    if (sp) sp.textContent = `현재: ${p.category} · 폴더 ${f.entity_db}/${f.catalog_db}/${f.records}`;
+    const sel = document.getElementById("settings-category");
+    if (sel && p.active) sel.value = p.active;
   } catch { /* 정적 서버면 무시 */ }
+}
+
+async function setCategory(profileKey) {
+  try {
+    const r = await fetch("/api/profile", {
+      method: "POST", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ profile: profileKey }),
+    });
+    const d = await r.json();
+    if (r.ok && d.ok) {
+      toast(`카테고리 변경됨 → ${profileKey}`);
+      await loadProfile();
+      await loadServerDashboard();
+    } else { toast("변경 실패: " + (d.error || "")); }
+  } catch { toast("API 연결 실패"); }
 }
 
 // --- 대시보드 (백엔드 고객DB 집계 — Obsidian 불필요) ---
@@ -547,6 +574,10 @@ async function loadServerDashboard() {
     const at = document.querySelector("#dash-all tbody");
     if (at) at.innerHTML = d.all.map(r =>
       `<tr><td>${esc(r.name)}</td><td>${esc(r.next_date)}</td><td>${esc(r.tags)}</td><td>${esc(r.contact)}</td></tr>`).join("");
+    // 수동 프롬프트용 고객 선택 채우기
+    const cs = document.getElementById("customer-select");
+    if (cs && d.all.length) cs.innerHTML = '<option value="">— 고객 선택 —</option>' +
+      d.all.map(r => `<option value="${esc(r.name)}">${esc(r.name)}</option>`).join("");
     return true;
   } catch { return false; }
 }
@@ -554,20 +585,17 @@ async function loadServerDashboard() {
 // --- AI 질문 (LLM 자동 답변) ---
 async function checkAskLLM() {
   const el = document.getElementById("ask-llm-state");
-  if (!el) return;
+  const ss = document.getElementById("settings-status");
+  let txt, bg;
   try {
     const h = await fetch("/api/health").then(r => r.json());
-    if (h.llm_available) {
-      el.textContent = `🤖 자동답변 ON (${h.model || "LLM"})`;
-      el.style.background = "var(--teal)";
-    } else {
-      el.textContent = "붙여넣기 모드 (LLM 꺼짐)";
-      el.style.background = "#888";
-    }
+    if (h.llm_available) { txt = `🤖 자동 모드 — LLM 연결됨 (${h.model || "LLM"})`; bg = "var(--emerald)"; }
+    else { txt = "✋ 수동 모드 — LLM 없음 (프롬프트 복사해 외부 AI에 붙여넣기)"; bg = "var(--amber)"; }
   } catch {
-    el.textContent = "API 없음 — 'python -m kv serve' 로 실행하세요";
-    el.style.background = "#c0392b";
+    txt = "⚠️ API 없음 — 서버(웹시작.bat)로 실행해야 합니다"; bg = "var(--accent)";
   }
+  if (el) { el.textContent = txt.replace(/^[🤖✋⚠️] /, ""); el.style.background = bg; }
+  if (ss) { ss.textContent = txt; ss.style.background = bg; ss.style.color = "#fff"; }
 }
 
 function renderAnswer(text) {
@@ -594,7 +622,7 @@ async function doAsk() {
     if (data.answer) {
       ansEl.innerHTML = "<h3>🤖 자동 답변</h3>" + renderAnswer(data.answer);
     } else {
-      ansEl.innerHTML = '<p class="hint">LLM이 꺼져 있어 답변이 없습니다. 검색된 자료를 참고하거나 AI작업큐 프롬프트를 Claude에 붙여넣으세요.</p>';
+      ansEl.innerHTML = '<p class="hint">LLM이 꺼져 있어 답변이 없습니다. 검색된 자료를 참고하거나 AI작업큐 프롬프트를 AI에 붙여넣으세요.</p>';
     }
     const hits = data.hits || [];
     srcEl.innerHTML = hits.length ? "<h3 style='margin-top:16px'>📎 참고 자료</h3>" + hits.map(h => `
@@ -675,6 +703,14 @@ async function fetchUrl() {
 const fetchBtn = document.getElementById("btn-fetch-url");
 if (fetchBtn) fetchBtn.onclick = fetchUrl;
 
+// 홈 "파일 선택해서 추가" → AI질문 탭으로 이동 + 파일창 바로 열기
+const homeAdd = document.getElementById("btn-home-add");
+if (homeAdd) homeAdd.onclick = () => {
+  switchTab("ask");
+  const fi = document.getElementById("ask-file");
+  if (fi) fi.click();   // 같은 클릭 제스처 안에서 파일 선택창 열기
+};
+
 const askBtn = document.getElementById("btn-ask");
 if (askBtn) askBtn.onclick = doAsk;
 const askInput = document.getElementById("ask-input");
@@ -686,6 +722,9 @@ if (askInput) askInput.addEventListener("keydown", e => {
 document.querySelectorAll('.tabs button[data-tab="dashboard"]').forEach(b => {
   b.addEventListener("click", loadServerDashboard);
 });
+// 설정: 카테고리(프로파일) 전환
+const catSel = document.getElementById("settings-category");
+if (catSel) catSel.addEventListener("change", e => setCategory(e.target.value));
 
 await loadDocs();
 await loadDemoCustomers();

@@ -156,7 +156,7 @@ def cmd_ask(args: argparse.Namespace) -> None:
         print(f"\n저장: {out}")
     else:
         print(f"\n질의응답 프롬프트 팩: {out}")
-        print("-> AI작업큐에서 열고 Claude에 붙여넣기 (로컬 LLM 켜면 자동 답변)")
+        print("-> AI작업큐에서 열고 AI에 붙여넣기 (로컬 LLM 켜면 자동 답변)")
 
 
 def cmd_fetch(args: argparse.Namespace) -> None:
@@ -235,8 +235,8 @@ def cmd_counsel(args: argparse.Namespace) -> None:
     from kv.search import rebuild_index
     rebuild_index()
     print(f"상담기록: {path}")
-    print(f"Claude 프롬프트 팩: {pack}")
-    print("-> Obsidian에서 AI작업큐 파일 열고 Claude에 붙여넣기")
+    print(f"AI 프롬프트 팩: {pack}")
+    print("-> Obsidian에서 AI작업큐 파일 열고 AI에 붙여넣기")
 
 
 def cmd_pack(args: argparse.Namespace) -> None:
@@ -252,8 +252,8 @@ def cmd_pack(args: argparse.Namespace) -> None:
     else:
         print(f"알 수 없는 pack 모드: {args.mode}")
         return
-    print(f"Claude 프롬프트 팩 생성: {p}")
-    print("-> Obsidian AI작업큐 폴더에서 열고 Claude에 붙여넣기")
+    print(f"AI 프롬프트 팩 생성: {p}")
+    print("-> Obsidian AI작업큐 폴더에서 열고 AI에 붙여넣기")
 
 
 def cmd_watch(_: argparse.Namespace) -> None:
@@ -304,7 +304,7 @@ def main(argv: list[str] | None = None) -> int:
     p_profiles = sub.add_parser("profiles", help="산업 프로파일 목록/현재 설정 보기")
     p_profiles.set_defaults(func=cmd_profiles)
 
-    p_ask = sub.add_parser("ask", help="내 자료 기반 질의응답 (로컬 LLM 자동/Claude 붙여넣기)")
+    p_ask = sub.add_parser("ask", help="내 자료 기반 질의응답 (로컬 LLM 자동/AI 붙여넣기)")
     p_ask.add_argument("question", help="질문")
     p_ask.add_argument("--top", type=int, default=5, help="참고할 자료 수")
     p_ask.set_defaults(func=cmd_ask)
@@ -329,7 +329,7 @@ def main(argv: list[str] | None = None) -> int:
     p_counsel.add_argument("--channel", default="대면", choices=["대면", "전화", "화상"])
     p_counsel.set_defaults(func=cmd_counsel)
 
-    p_pack = sub.add_parser("pack", help="Claude 프롬프트 팩 생성")
+    p_pack = sub.add_parser("pack", help="AI 프롬프트 팩 생성")
     p_pack.add_argument("mode", choices=["propose", "message", "excel", "counsel"])
     p_pack.add_argument("target", help="고객명 또는 파일 경로")
     p_pack.add_argument("--customer", "-c", default="", help="counsel 모드용 고객명")

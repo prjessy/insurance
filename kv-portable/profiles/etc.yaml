@@ -1,0 +1,34 @@
+# 산업 프로파일: 기타 (범용) — 카테고리: 기타
+# 특정 산업이 아닐 때 쓰는 가장 중립적인 프로파일.
+name: 기타
+category: 기타
+
+labels:
+  entity: 대상
+  catalog: 항목
+  record: 기록
+  records: 기록
+  proposal: 보고서
+  message: 안내
+  channel: 경로
+  date: 일자
+
+folders:
+  entity_db: 대상DB
+  catalog_db: 항목DB
+  records: 기록
+  queue: AI작업큐
+
+record_tags:
+  - 기록
+  - 수집/자동
+
+prompts:
+  summarize: |
+    아래 내용을 핵심요약·주요내용·다음액션 형식의 마크다운으로 정리해줘.
+    입력된 정보만 사용하고 추측하지 마.
+
+    [내용]
+    """
+    여기에 붙여넣기
+    """

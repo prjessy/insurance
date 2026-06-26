@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>모아큐 — 자료를 모아, AI에게 묻다</title>
+  <title>갈무리 — 흩어진 자료를 정리해, AI에게 묻다</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700;900&display=swap" rel="stylesheet">
@@ -13,8 +13,8 @@
 <body>
 <div class="wrap">
   <header>
-    <h1>모아큐 <span class="badge" id="profile-badge">금융</span></h1>
-    <p>흩어진 자료를 모아 <b>AI에게 묻다</b> — 엑셀·문서·캡처·URL → 자동 정리 · 검색 · 대시보드</p>
+    <h1>갈무리 <span class="badge" id="profile-badge">금융</span></h1>
+    <p>흩어진 자료를 정리해 <b>AI에게 묻다</b> — 엑셀·문서·캡처·URL → 자동 정리 · 검색 · 대시보드</p>
   </header>
 
   <nav class="tabs">
@@ -33,8 +33,8 @@
       <div class="step-card">
         <span class="step-num">1</span>
         <h3>자료 추가</h3>
-        <p>엑셀·PDF·문서·캡처·URL을 넣으면 자동으로 정리(MD)됩니다.</p>
-        <button class="btn" data-goto-tab="ask">💬 자료 넣고 질문하기</button>
+        <p>엑셀·PDF·문서·캡처를 넣으면 자동으로 정리(MD)됩니다.</p>
+        <button class="btn" id="btn-home-add">📎 파일 선택해서 추가</button>
       </div>
       <div class="step-card">
         <span class="step-num">2</span>
@@ -49,6 +49,31 @@
         <button class="btn secondary" data-goto-tab="dashboard">📊 대시보드</button>
       </div>
     </div>
+
+    <h3 style="margin-top:24px">📖 무엇을 할 수 있나요?</h3>
+    <div class="steps" style="margin-top:10px">
+      <div class="step-card">
+        <h3>🌐 웹에서 (이 화면)</h3>
+        <ul style="margin:10px 0 0 18px;color:var(--muted);font-size:.9rem;line-height:1.9">
+          <li>자료 추가: 엑셀·CSV·PDF·PPT·한글·문서·<b>이미지(캡처) OCR</b>·URL</li>
+          <li><b>AI 질문</b> — 내 자료 근거로 자동 답변</li>
+          <li><b>제안서·문자·상담정리</b> 자동 생성</li>
+          <li><b>대시보드</b> 갱신·태그 자동 집계 / 검색</li>
+          <li>설정에서 <b>산업 카테고리</b> 전환(금융·관리·기술·기타)</li>
+        </ul>
+      </div>
+      <div class="step-card">
+        <h3>💻 CLI에서 (고급·자동화)</h3>
+        <ul style="margin:10px 0 0 18px;color:var(--muted);font-size:.9rem;line-height:1.9">
+          <li><b>녹음 전사</b>: <code>kv counsel --audio 파일</code> (Whisper)</li>
+          <li><b>폴더 자동 감시</b>: <code>kv watch</code> (넣으면 자동 변환)</li>
+          <li><b>일괄 처리</b>: <code>kv all</code> (수집+정제+인덱싱)</li>
+          <li><b>Obsidian 동기화</b>: <code>kv sync</code></li>
+          <li>URL 가져오기: <code>kv fetch &lt;url&gt;</code> (웹에서도 가능)</li>
+        </ul>
+        <p class="hint" style="margin-top:8px">※ 녹음 전사는 풀버전(Whisper 포함) 또는 CLI에서. 경량 exe엔 미포함 → 받아쓰기 텍스트를 붙여넣기.</p>
+      </div>
+    </div>
   </section>
 
   <!-- AI 질문 -->
@@ -56,10 +81,14 @@
     <h2>💬 AI 질문 — 내 자료 기반 답변</h2>
     <p class="hint">질문하면 내 자료(고객DB·상담기록·문서)를 검색해 <b>근거와 함께 자동으로 답변</b>합니다. <span id="ask-llm-state" class="badge" style="background:#888">LLM 확인중</span></p>
     <div class="drop" id="ask-drop" style="padding:14px;margin-bottom:10px">
-      📎 자료 추가 — 엑셀·PDF·문서·메모를 여기에 드래그 (변환+인덱싱 후 바로 질문 가능)
-      <br><small>또는 클릭해서 선택</small>
+      📎 파일을 여기에 드래그 (엑셀·PDF·문서·이미지)
     </div>
-    <input type="file" id="ask-file" hidden accept=".xlsx,.xls,.csv,.tsv,.pdf,.pptx,.hwp,.hwpx,.txt,.md,.docx,.png,.jpg,.jpeg">
+    <div style="margin:10px 0;color:#fff">
+      또는 파일 선택 →
+      <input type="file" id="ask-file"
+             accept=".xlsx,.xls,.csv,.tsv,.pdf,.pptx,.hwp,.hwpx,.txt,.md,.docx,.png,.jpg,.jpeg"
+             style="background:#fff;color:#1e2530;padding:8px;border-radius:8px;max-width:100%">
+    </div>
     <div style="display:flex;gap:6px;margin-bottom:8px">
       <input type="url" id="ask-url" placeholder="🌐 또는 URL 입력 — 웹페이지를 가져와 분석 (https://...)" style="flex:1">
       <button class="btn secondary" id="btn-fetch-url">가져오기</button>
@@ -94,19 +123,29 @@
     </div>
     <div class="drop" id="drop-zone">
       📂 파일을 드래그하거나 클릭<br>
-      <small>txt, md, xlsx, png, jpg 지원 · 녹음은 전사 txt로 넣으세요</small>
+      <small>엑셀·CSV·PDF·PPT·한글·문서·이미지(캡처) 지원</small>
     </div>
-    <input type="file" id="file-input" multiple hidden accept=".txt,.md,.markdown,.xlsx,.xls,.png,.jpg,.jpeg,.webp">
+    <input type="file" id="file-input" multiple hidden accept=".txt,.md,.markdown,.xlsx,.xls,.csv,.tsv,.pdf,.pptx,.hwp,.hwpx,.docx,.png,.jpg,.jpeg,.webp">
     <br>
     <button class="btn" id="btn-pick-vault">📁 Obsidian 볼트 폴더 열기 (Chrome/Edge)</button>
-    <button class="btn secondary" id="btn-paste-transcript">📝 전사 텍스트 직접 입력</button>
+    <button class="btn secondary" id="btn-paste-transcript">📝 텍스트(메모/전사) 직접 입력</button>
     <hr style="margin:16px 0;border:none;border-top:1px solid var(--line)">
-    <h3>🎙️ 녹음 → Whisper 자동 변환 <span id="server-badge" class="badge" style="background:#888">확인중</span></h3>
-    <p class="hint">mp3/wav 넣으면 자동 받아쓰기 (Portable EXE 또는 start.bat 필요)</p>
-    <input type="file" id="audio-input" accept="audio/*,.mp3,.wav,.m4a" style="margin-bottom:8px">
-    <input type="text" id="counsel-customer" placeholder="고객명 (예: 정수남)" style="margin-bottom:8px">
-    <button class="btn accent" id="btn-whisper">녹음 변환 + 상담기록 저장</button>
-    <pre id="whisper-log" class="prompt-box" style="display:none;margin-top:10px;max-height:200px"></pre>
+    <h3>🎙️ 녹음 (선택)</h3>
+    <p class="hint">
+      녹음 전사는 일반 PC에선 정확도·속도가 떨어집니다. <b>휴대폰/PC 받아쓰기</b>(클로바노트·Windows <code>Win+H</code> 등)로
+      텍스트화한 뒤 <b>위에 파일로 넣거나 "텍스트 직접 입력"</b>에 붙여넣는 걸 권장합니다. (정확·무료)
+      <br>자동 전사는 고사양 PC/서버(Whisper) 또는 CLI <code>kv counsel --audio</code>에서.
+    </p>
+    <details style="margin-top:6px">
+      <summary class="hint" style="cursor:pointer">그래도 녹음 자동 전사 시도 (Whisper 환경)</summary>
+      <div style="margin-top:8px">
+        <input type="file" id="audio-input" accept="audio/*,.mp3,.wav,.m4a" style="margin-bottom:8px">
+        <input type="text" id="counsel-customer" placeholder="고객명 (예: 정수남)" style="margin-bottom:8px">
+        <button class="btn secondary" id="btn-whisper">녹음 변환 + 상담기록 저장</button>
+        <span id="server-badge" class="badge" style="background:#888">확인중</span>
+        <pre id="whisper-log" class="prompt-box" style="display:none;margin-top:10px;max-height:200px"></pre>
+      </div>
+    </details>
     <div class="file-list" id="recent-list"></div>
   </section>
 

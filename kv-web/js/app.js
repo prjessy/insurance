@@ -489,16 +489,17 @@ fileInput.onchange = async () => {
   toast("수집 완료");
 };
 
-document.getElementById("btn-pick-vault").onclick = loadVaultDir;
-document.getElementById("btn-home-vault").onclick = loadVaultDir;
+const _on = (id, fn) => { const el = document.getElementById(id); if (el) el.onclick = fn; };
+_on("btn-pick-vault", loadVaultDir);
+_on("btn-home-vault", loadVaultDir);
 document.querySelectorAll("[data-goto-tab]").forEach(btn => {
   btn.onclick = () => switchTab(btn.dataset.gotoTab);
 });
-document.getElementById("btn-paste-transcript").onclick = () => {
+_on("btn-paste-transcript", () => {
   switchTab("prompt");
-  document.getElementById("transcript-input").focus();
-};
-document.getElementById("btn-whisper").onclick = whisperCounsel;
+  document.getElementById("transcript-input")?.focus();
+});
+_on("btn-whisper", whisperCounsel);
 
 document.getElementById("search-input").oninput = e => {
   const hits = searchDocs(e.target.value);
@@ -701,6 +702,14 @@ async function fetchUrl() {
 }
 const fetchBtn = document.getElementById("btn-fetch-url");
 if (fetchBtn) fetchBtn.onclick = fetchUrl;
+
+// 홈 "파일 선택해서 추가" → AI질문 탭으로 이동 + 파일창 바로 열기
+const homeAdd = document.getElementById("btn-home-add");
+if (homeAdd) homeAdd.onclick = () => {
+  switchTab("ask");
+  const fi = document.getElementById("ask-file");
+  if (fi) fi.click();   // 같은 클릭 제스처 안에서 파일 선택창 열기
+};
 
 const askBtn = document.getElementById("btn-ask");
 if (askBtn) askBtn.onclick = doAsk;

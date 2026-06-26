@@ -150,8 +150,11 @@ class Handler(BaseHTTPRequestHandler):
         if path == "/api/dashboard":
             return self._json(200, _dashboard())
         if path == "/api/profile":
+            from kv.config import load_config
+
             prof = load_profile()
             return self._json(200, {
+                "active": load_config().get("profile") or "finance",
                 "name": prof.get("name"),
                 "category": prof.get("category"),
                 "labels": prof.get("labels", {}),
@@ -176,6 +179,24 @@ class Handler(BaseHTTPRequestHandler):
                 "hits": [{"title": h.title, "path": h.path, "snippet": h.snippet} for h in hits],
                 "file": str(out),
             })
+        if path == "/api/profile":
+            import re
+
+            from kv.config import CONFIG_PATH, available_profiles
+
+            name = (data.get("profile") or "").strip()
+            if name not in available_profiles():
+                return self._json(400, {"error": f"알 수 없는 프로파일: {name}"})
+            try:
+                txt = CONFIG_PATH.read_text(encoding="utf-8") if CONFIG_PATH.exists() else ""
+                if re.search(r"(?m)^profile:\s*.*$", txt):
+                    txt = re.sub(r"(?m)^profile:\s*.*$", f"profile: {name}", txt, count=1)
+                else:
+                    txt = f"profile: {name}\n" + txt
+                CONFIG_PATH.write_text(txt, encoding="utf-8")
+            except Exception as e:
+                return self._json(500, {"error": f"저장 실패: {e}"})
+            return self._json(200, {"ok": True, "profile": name})
         if path == "/api/collect":
             import base64
 
@@ -220,6 +241,19 @@ class Handler(BaseHTTPRequestHandler):
             n = rebuild_index()
             return self._json(200, {"ok": True, "title": info["title"],
                                     "chars": info["chars"], "indexed": n})
+        if path == "/api/pack":
+            mode = (data.get("mode") or "").strip()
+            target = (data.get("target") or data.get("customer") or "").strip()
+            transcript = data.get("transcript") or ""
+            from kv.prompt_pack import pack_and_answer
+
+            try:
+                r = pack_and_answer(mode, target, transcript)
+            except FileNotFoundError as e:
+                return self._json(404, {"error": str(e)})
+            except Exception as e:
+                return self._json(400, {"error": str(e)})
+            return self._json(200, {"ok": True, **r})
         if path == "/api/search":
             q = (data.get("query") or "").strip()
             if not q:
@@ -245,6 +279,7 @@ class Handler(BaseHTTPRequestHandler):
         self.send_response(200)
         self.send_header("Content-Type", ctype)
         self.send_header("Content-Length", str(len(body)))
+        self.send_header("Cache-Control", "no-store, no-cache, must-revalidate")
         self.end_headers()
         self.wfile.write(body)
 

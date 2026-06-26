@@ -43,3 +43,6 @@ secrets*.txt
 
 # 업로드된 실데이터 (어느 폴더든 무시)
 *동산*
+
+# 실제 녹음 파일 (커밋 금지)
+knowledge-vault/inbox/audio/
