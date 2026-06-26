@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="ko">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Architecture Visualizer</title>
+    <link rel="stylesheet" href="styles.css">
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&display=swap" rel="stylesheet">
+</head>
+
+<body>
+    <div class="app-container">
+        <!-- Sidebar Navigation -->
+        <aside class="sidebar glass-panel">
+            <div class="logo">
+                <h2>AI Architecture Demo</h2>
+            </div>
+
+            <nav class="nav-menu">
+                <button class="nav-btn active" data-mode="1">1️⃣ 도입 전 (단일 AI + 하드코딩)</button>
+                <button class="nav-btn" data-mode="2">2️⃣ MCP 방식 (단일 AI + 플러그인 툴)</button>
+                <button class="nav-btn" data-mode="3">3️⃣ 다중 AI (팀 협업 + 하드코딩)</button>
+                <button class="nav-btn highlight" data-mode="4">4️⃣ 다중 AI + MCP (완성형)</button>
+            </nav>
+
+            <div class="info-card">
+                <h4 id="mode-title">1. 기존 방식</h4>
+                <p id="mode-desc">모든 역할을 하나의 거대한 AI가 수행하며, DB 연동 코드(도구)가 AI 소스코드 안에 고정(Hard-coded)되어 있습니다. 새로운 도구를 추가하려면
+                    AI 서버 코드를 뜯어고쳐야 합니다.</p>
+            </div>
+        </aside>
+
+        <main class="main-content">
+            <!-- Architecture Visualization Area -->
+            <div class="architecture-view glass-panel">
+                <div class="view-header">
+                    <h3>🔍 시스템 작동 구조도 (Architecture)</h3>
+                </div>
+                <div class="diagram-container" id="diagram-container">
+                    <!-- Nodes injected via JS based on mode -->
+                </div>
+            </div>
+
+            <!-- Dashboard & Logs Area -->
+            <div class="bottom-area">
+                <div class="result-board glass-panel">
+                    <h3>📋 서비스 결과 화면</h3>
+                    <div id="result-content" class="result-content">
+                        [시나리오 대기 중] "내일 9시 회의 스케줄 잡고, 할 일에 '자료 준비' 추가해줘"
+                    </div>
+                    <button id="run-btn" class="run-btn">시나리오 실행하기</button>
+                    <button id="auto-demo-btn" class="run-btn auto-demo-btn">🔄 4단계 자동 데모</button>
+                </div>
+
+                <div class="log-board glass-panel">
+                    <h3>💻 통신 로그 (어떻게 작동하는가?)</h3>
+                    <div class="terminal" id="terminal">
+                        <div class="log system">시스템 로드 완료. 위 실행 버튼을 눌러보세요.</div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+    <script src="app.js"></script>
+</body>
+
+</html>

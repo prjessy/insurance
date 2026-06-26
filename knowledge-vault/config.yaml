@@ -1,0 +1,73 @@
+# === 산업 프로파일 ===
+# 도메인 용어/폴더명을 결정. profiles/<name>.yaml 참조.
+#   finance = 금융 / support = 기술지원(기술) / general = 일반(관리)
+# 새 산업은 profiles/ 에 yaml 하나 추가하면 됨.  (python -m kv profiles 로 목록)
+profile: finance
+
+# === Obsidian 본 vault 경로 ===
+# 절대경로 또는 knowledge-vault 기준 상대경로(".." = 레포 루트).
+obsidian_vault: ".."
+obsidian_subfolder: KnowledgeVault
+
+# 소스 유형별 Obsidian 저장 위치
+obsidian_routes:
+  audio: 상담기록
+  notes: KnowledgeVault
+  excel: KnowledgeVault
+  image: KnowledgeVault
+  default: KnowledgeVault
+
+obsidian_sync_auto: true
+obsidian_copy_attachments: true
+
+# 볼트 안 기존 참조 문서 폴더 (검색 인덱스에 포함)
+reference_paths:
+  - 고객DB
+  - 상품DB
+  - 상담기록
+
+# 인덱스/수집에서 제외할 폴더
+exclude_dirs:
+  - knowledge-vault
+  - .git
+  - web_demo
+  - real_app
+  - node_modules
+  - .obsidian
+
+# === Whisper ===
+whisper:
+  enabled: true
+  engine: faster-whisper
+  model: base
+  language: ko
+  compute_type: int8
+
+default_tags:
+  - 수집/자동
+
+source_tags:
+  audio: [수집/녹음, 형식/텍스트변환, 상담/전사, painpoint/녹취정리]
+  image: [수집/사진, 형식/OCR]
+  excel: [수집/엑셀, 형식/표, painpoint/엑셀카드]
+  notes: [수집/노트, 형식/원문]
+  pdf: [수집/문서, 형식/PDF]
+  pptx: [수집/문서, 형식/슬라이드]
+  hwp: [수집/문서, 형식/한글]
+
+# 흩어진 정보 -> inbox 매핑
+inbox_guide:
+  상담수첩: inbox/notes
+  엑셀명단: inbox/excel
+  카톡대화: inbox/notes
+  통화메모: inbox/notes
+  녹음파일: inbox/audio
+  사진서류: inbox/images
+  PDF문서: inbox/documents
+  PPT발표: inbox/documents
+  한글문서: inbox/documents
+
+refined_tag: 상태/정제완료
+index_db: index/search.db
+watch_inbox: true
+watch_debounce_sec: 3

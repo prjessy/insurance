@@ -1,0 +1,15 @@
+pyyaml>=6.0
+openpyxl>=3.1.0
+Pillow>=10.0.0
+pytesseract>=0.3.10
+python-docx>=1.1.0
+watchdog>=4.0.0
+
+# 문서 변환 (선택 — 미설치 시 해당 형식만 안내 메시지로 건너뜀)
+pypdf>=4.0.0
+python-pptx>=0.6.23
+olefile>=0.46
+
+# Whisper (하나만 설치해도 됨 — faster-whisper 권장)
+faster-whisper>=1.0.0
+# openai-whisper

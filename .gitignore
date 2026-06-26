@@ -10,3 +10,22 @@
 .obsidian/workspace
 .obsidian/cache
 .trash/
+
+# === 빌드 산출물 / 대용량 (커밋 제외) ===
+kv-portable/build/
+kv-portable/dist/
+kv-portable/__pycache__/
+*.zip
+*.exe
+*.spec.bak
+
+# Python 캐시·생성물
+__pycache__/
+*.pyc
+knowledge-vault/index/
+knowledge-vault/vault/raw/
+knowledge-vault/vault/refined/
+
+# 음성 모델·미디어 대용량 (선택)
+*.bin
+

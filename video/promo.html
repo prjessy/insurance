@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>보험 영업 AI 도우미 — 소개 영상</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;700;800&display=swap');
+:root {
+  --ground: #E8EBE2; --paper: #F4F6EF; --text: #1F2723; --muted: #5B665E;
+  --accent: #CC3F26; --teal: #2C6B66; --line: #C9CFC1;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html, body { height: 100%; overflow: hidden; font-family: 'Noto Sans KR', sans-serif; background: #000; }
+#stage { width: 100vw; height: 100vh; position: relative; }
+.scene {
+  position: absolute; inset: 0; display: flex; flex-direction: column;
+  justify-content: center; align-items: center; padding: 48px;
+  background: var(--ground); opacity: 0; pointer-events: none;
+  transition: opacity 0.8s ease;
+}
+.scene.active { opacity: 1; pointer-events: auto; }
+.scene.dark { background: #1F2723; color: #E8EBE2; }
+.eyebrow { color: var(--teal); font-size: 14px; letter-spacing: .2em; margin-bottom: 16px; }
+h1 { font-size: clamp(28px, 5vw, 52px); text-align: center; line-height: 1.2; font-weight: 800; max-width: 900px; }
+h1 .hl { color: var(--accent); }
+.sub { color: var(--muted); font-size: clamp(16px, 2vw, 22px); text-align: center; max-width: 700px; margin-top: 20px; line-height: 1.6; }
+.chips { display: flex; flex-wrap: wrap; gap: 12px; justify-content: center; margin-top: 28px; max-width: 800px; }
+.chip { background: var(--paper); border: 1px solid var(--line); padding: 12px 18px; border-radius: 4px; font-size: 16px; animation: pop 0.5s ease both; }
+.chip:nth-child(1){animation-delay:.1s}.chip:nth-child(2){animation-delay:.2s}.chip:nth-child(3){animation-delay:.3s}
+.chip:nth-child(4){animation-delay:.4s}.chip:nth-child(5){animation-delay:.5s}.chip:nth-child(6){animation-delay:.6s}
+@keyframes pop { from{opacity:0;transform:scale(.8)} to{opacity:1;transform:scale(1)} }
+.step { color: var(--accent); font-weight: 700; font-size: 14px; margin-bottom: 8px; }
+.card { background: var(--paper); border: 1px solid var(--line); border-radius: 8px; padding: 24px; max-width: 420px; margin-top: 20px; box-shadow: 0 14px 40px rgba(0,0,0,.12); }
+.card .name { font-size: 24px; font-weight: 800; }
+.tags { margin: 12px 0; }
+.tag { display: inline-block; background: rgba(204,63,38,.1); color: var(--accent); padding: 4px 12px; border-radius: 999px; font-size: 13px; margin-right: 6px; }
+.dash { background: #1F2723; color: #E8EBE2; border-radius: 8px; padding: 0; overflow: hidden; max-width: 560px; width: 100%; margin-top: 20px; }
+.dash .bar { padding: 14px 20px; border-bottom: 1px solid #333; color: #f0c97a; font-size: 14px; }
+.row { display: grid; grid-template-columns: 1.2fr 1fr 1fr; gap: 12px; padding: 12px 20px; border-bottom: 1px solid #2a332d; font-size: 14px; }
+.row.head { color: #888; font-size: 12px; }
+.compare { display: flex; gap: 24px; margin-top: 24px; flex-wrap: wrap; justify-content: center; }
+.col { background: var(--paper); border-radius: 12px; padding: 28px; width: 280px; border-top: 4px solid var(--accent); }
+.col.tobe { border-top-color: var(--teal); }
+.col h3 { font-size: 18px; margin-bottom: 12px; }
+.big { font-size: 48px; font-weight: 800; margin-top: 12px; }
+.col.asis .big { color: var(--accent); }
+.col.tobe .big { color: var(--teal); }
+.punch { font-size: clamp(36px, 6vw, 64px); font-weight: 800; margin-top: 32px; }
+.punch .from { color: var(--accent); }
+.punch .to { color: var(--teal); }
+.io { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; max-width: 900px; margin-top: 20px; }
+@media(max-width:700px){ .io{ grid-template-columns:1fr; } }
+.box { background: var(--paper); border: 1px solid var(--line); border-radius: 8px; padding: 20px; font-size: 14px; line-height: 1.7; }
+.box.ai { border-color: rgba(204,63,38,.4); position: relative; }
+.stamp { position: absolute; top: 12px; right: 12px; border: 2px solid var(--accent); color: var(--accent); border-radius: 50%; width: 64px; height: 64px; display: grid; place-content: center; text-align: center; font-size: 11px; font-weight: 700; transform: rotate(-12deg); }
+#progress { position: fixed; bottom: 0; left: 0; height: 4px; background: var(--teal); width: 0; transition: width 0.3s; z-index: 99; }
+#timer { position: fixed; bottom: 12px; right: 16px; color: var(--muted); font-size: 12px; z-index: 99; background: rgba(255,255,255,.8); padding: 4px 10px; border-radius: 4px; }
+.controls { position: fixed; top: 12px; right: 12px; z-index: 99; }
+.controls button { background: var(--teal); color: #fff; border: none; padding: 8px 14px; border-radius: 6px; cursor: pointer; font-family: inherit; margin-left: 6px; }
+</style>
+</head>
+<body>
+<div id="progress"></div>
+<div id="timer"></div>
+<div class="controls">
+  <button onclick="togglePause()">⏸ 일시정지</button>
+  <button onclick="restart()">↺ 처음</button>
+</div>
+<div id="stage">
+
+  <section class="scene active" data-dur="6">
+    <p class="eyebrow">OBSIDIAN × CLAUDE</p>
+    <h1>흩어진 고객 정보가 스스로 정리되고,<br><span class="hl">AI가 제안서까지 씁니다</span></h1>
+    <p class="sub">보험 영업 AI 도우미 — 코딩 없이, 내 컴퓨터 안에서</p>
+  </section>
+
+  <section class="scene" data-dur="5">
+    <p class="step">시작점</p>
+    <h1 style="font-size:36px">지금은 정보가 이렇게 흩어져 있죠</h1>
+    <div class="chips">
+      <span class="chip">📒 상담 수첩</span>
+      <span class="chip">📊 엑셀 고객명단</span>
+      <span class="chip">💬 카톡 대화</span>
+      <span class="chip">📞 통화 메모</span>
+      <span class="chip">🧾 가입 서류</span>
+      <span class="chip">🧠 머릿속 기억</span>
+    </div>
+  </section>
+
+  <section class="scene" data-dur="6">
+    <p class="step">01 — 모으기</p>
+    <h1 style="font-size:36px">고객 한 명 = 한 장의 카드</h1>
+    <div class="card">
+      <p class="name">정수남</p>
+      <p style="color:var(--muted);font-size:13px;margin:6px 0">33세 · 배우자, 자녀(3세)</p>
+      <div class="tags"><span class="tag">#갱신임박</span><span class="tag">#자녀보험미가입</span></div>
+      <p style="font-size:14px;margin-top:8px">실손보험 월 29,000원 · <strong>갱신 7/5</strong></p>
+    </div>
+  </section>
+
+  <section class="scene dark" data-dur="6">
+    <p class="step" style="color:#f0c97a">02 — 자동 분류</p>
+    <h1 style="font-size:32px;color:#E8EBE2">태그만 달면 고객이 저절로 모입니다</h1>
+    <div class="dash">
+      <div class="bar">🔔 갱신 임박 (60일 이내)</div>
+      <div class="row head"><span>고객</span><span>갱신일</span><span>태그</span></div>
+      <div class="row"><span>홍길동</span><span style="color:#f0c97a">2026-07-20</span><span>갱신임박</span></div>
+      <div class="row"><span>정수남</span><span style="color:#f0c97a">2026-07-05</span><span>갱신임박·자녀</span></div>
+      <div class="row"><span>김영희</span><span style="color:#f0c97a">2026-08-10</span><span>VIP</span></div>
+    </div>
+    <p class="sub" style="color:#9aa89f;margin-top:16px">600명이어도 1초</p>
+  </section>
+
+  <section class="scene" data-dur="8">
+    <p class="step">03 — AI가 씁니다</p>
+    <h1 style="font-size:32px">녹취 붙여넣기 → 제안서 + 문자</h1>
+    <div class="io">
+      <div class="box">
+        <small style="color:var(--teal)">상담 녹취</small><br><br>
+        "실손 갱신되면 보험료 부담돼요. 애가 셋 살인데 보험도 알아보고 싶어요…"
+      </div>
+      <div class="box ai">
+        <div class="stamp">AI<br>작성</div>
+        <small style="color:var(--accent)">맞춤 제안</small><br><br>
+        <strong>① 우리아이 종합보험</strong> — 3세 가입 최적기<br>
+        <strong>② 실손 4세대 전환</strong> — 보험료 비교<br><br>
+        <em style="font-size:13px">"정수남 고객님 😊 비교안 준비했어요…"</em>
+      </div>
+    </div>
+  </section>
+
+  <section class="scene" data-dur="7">
+    <p class="step">AS-IS → TO-BE</p>
+    <h1 style="font-size:32px">고객 한 명, 하루가 달라집니다</h1>
+    <div class="compare">
+      <div class="col asis">
+        <h3>🔴 지금</h3>
+        <p style="font-size:14px;color:var(--muted)">녹음 정리 20분<br>제안서 30분<br>문자 10분<br>갱신 확인 15분</p>
+        <div class="big">80분</div>
+      </div>
+      <div class="col tobe">
+        <h3>🟢 이 시스템</h3>
+        <p style="font-size:14px;color:var(--muted)">AI 정리 1분<br>제안서 2분<br>문자 30초<br>대시보드 0분</p>
+        <div class="big">6분</div>
+      </div>
+    </div>
+    <div class="punch"><span class="from">80분</span> → <span class="to">6분</span></div>
+  </section>
+
+  <section class="scene" data-dur="5">
+    <p class="eyebrow">🔒 고객 정보는 내 컴퓨터에</p>
+    <h1 style="font-size:36px">Obsidian + Claude<br><span class="hl">보험 설계사를 위한 영업 자동화</span></h1>
+    <p class="sub">prjessy.github.io/insurance</p>
+  </section>
+
+</div>
+<script>
+const scenes = [...document.querySelectorAll('.scene')];
+const durations = scenes.map(s => parseInt(s.dataset.dur || 5) * 1000);
+const total = durations.reduce((a,b)=>a+b, 0);
+let idx = 0, elapsed = 0, paused = false, last = Date.now(), raf;
+
+function show(i) {
+  scenes.forEach((s,j) => s.classList.toggle('active', j === i));
+  idx = i;
+}
+function tick() {
+  if (paused) { last = Date.now(); raf = requestAnimationFrame(tick); return; }
+  const now = Date.now();
+  elapsed += now - last; last = now;
+  const loop = elapsed % total;
+  document.getElementById('progress').style.width = (loop/total*100)+'%';
+  const sec = Math.ceil((total-loop)/1000);
+  document.getElementById('timer').textContent = sec + 's';
+  let acc = 0;
+  for (let i = 0; i < durations.length; i++) {
+    acc += durations[i];
+    if (loop < acc) { if (idx !== i) show(i); break; }
+  }
+  raf = requestAnimationFrame(tick);
+}
+function togglePause() { paused = !paused; }
+function restart() { elapsed = 0; show(0); }
+show(0); tick();
+// 자동 전체화면 권장
+document.addEventListener('click', () => {
+  if (!document.fullscreenElement) document.documentElement.requestFullscreen?.();
+}, { once: true });
+</script>
+</body>
+</html>

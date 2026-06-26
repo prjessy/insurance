@@ -1,0 +1,30 @@
+# 산업 프로파일: 금융 (카테고리: 금융)
+# 보험·대출·자산관리 등 금융 영업 전반에 쓰는 기본 프로파일.
+# config.yaml 에서  profile: finance  로 활성화.
+# prompts 를 비워두면 vault 의 프롬프트.md 섹션(①②③④)을 사용한다.
+name: 금융
+category: 금융
+
+labels:
+  entity: 고객
+  catalog: 상품
+  record: 상담
+  records: 상담기록
+  proposal: 제안서
+  message: 안내 문자
+  channel: 채널
+  date: 상담일
+
+folders:
+  entity_db: 고객DB
+  catalog_db: 상품DB
+  records: 상담기록
+  queue: AI작업큐
+
+record_tags:
+  - 상담
+  - painpoint/녹취정리
+  - 수집/자동
+
+# 금융은 기존 프롬프트.md 를 그대로 사용 (빈 값 = 프롬프트.md fallback)
+prompts: {}
