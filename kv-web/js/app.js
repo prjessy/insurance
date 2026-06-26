@@ -714,11 +714,11 @@ if (homeAdd) homeAdd.onclick = () => {
 // 데이터 초기화
 const cleanBtn = document.getElementById("btn-clean");
 if (cleanBtn) cleanBtn.onclick = async () => {
-  if (!confirm("변환물·검색·작업큐를 모두 지웁니다. 계속할까요?")) return;
+  if (!confirm("⚠️ 전부 초기화: 변환물·검색·작업큐 + 고객DB 등 대시보드 데이터(템플릿 제외) + inbox 원본을 모두 지웁니다. 계속할까요?")) return;
   const log = document.getElementById("clean-log");
   log.textContent = " ⏳ 초기화 중…";
   try {
-    const r = await fetch("/api/clean", { method: "POST", headers: { "Content-Type": "application/json" }, body: "{}" });
+    const r = await fetch("/api/clean", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ all: true }) });
     const d = await r.json();
     log.textContent = d.ok ? ` ✅ 초기화 완료 (${d.removed}개 폴더)` : ` 오류: ${d.error || ""}`;
     await loadServerDashboard();

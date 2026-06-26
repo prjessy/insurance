@@ -162,7 +162,7 @@ def cmd_ask(args: argparse.Namespace) -> None:
 def cmd_clean(args: argparse.Namespace) -> None:
     from kv.maintenance import clean
 
-    r = clean(include_queue=True, include_inbox=args.all)
+    r = clean(include_queue=True, include_inbox=args.all, include_refs=args.all)
     print(f"초기화 완료: {len(r['removed'])}개 폴더 삭제·재생성")
     for p in r["removed"]:
         print(f"  - {p}")

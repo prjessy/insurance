@@ -12,7 +12,8 @@ from kv.config import INDEX_DIR, VAULT_RAW, VAULT_REFINED, profile_folder
 from kv.import_refs import vault_root
 
 
-def clean(include_queue: bool = True, include_inbox: bool = False) -> dict:
+def clean(include_queue: bool = True, include_inbox: bool = False,
+          include_refs: bool = False) -> dict:
     removed: list[str] = []
 
     def _rm(p):
@@ -33,6 +34,16 @@ def clean(include_queue: bool = True, include_inbox: bool = False) -> dict:
         from kv.config import INBOX
         for sub in ("audio", "images", "excel", "documents", "notes"):
             _rm(INBOX / sub)
+
+    # 참조 데이터(고객DB·상품DB·기록) — 템플릿(_*.md)은 남김 → 대시보드 비움
+    if include_refs and vr:
+        for key in ("entity_db", "catalog_db", "records"):
+            folder = vr / profile_folder(key)
+            if folder.exists():
+                for md in folder.glob("*.md"):
+                    if not md.name.startswith("_"):
+                        md.unlink()
+                        removed.append(str(md))
 
     # 빈 폴더 복구
     for d in (VAULT_RAW, VAULT_REFINED, INDEX_DIR):

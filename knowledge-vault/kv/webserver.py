@@ -200,7 +200,11 @@ class Handler(BaseHTTPRequestHandler):
         if path == "/api/clean":
             from kv.maintenance import clean
 
-            r = clean(include_queue=True, include_inbox=bool(data.get("all")))
+            r = clean(
+                include_queue=True,
+                include_inbox=bool(data.get("inbox") or data.get("all")),
+                include_refs=bool(data.get("refs") or data.get("all")),
+            )
             return self._json(200, {"ok": True, "removed": len(r["removed"])})
         if path == "/api/collect":
             import base64
