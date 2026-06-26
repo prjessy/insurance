@@ -1,6 +1,6 @@
 """내 자료 기반 질의응답 프롬프트 팩 (로컬 RAG, API 비용 0).
 
-검색 인덱스에서 질문과 관련된 문서를 모아 AI 붙여넣기용 프롬프트로 묶는다.
+검색 인덱스에서 질문과 관련된 문서를 모아 Claude 붙여넣기용 프롬프트로 묶는다.
 상용 'second brain Q&A / ask your notes' 기능을 로컬·무비용으로 대체.
 """
 
@@ -80,14 +80,14 @@ def ask_pack(question: str, top_k: int = 5, max_chars: int = 1500) -> tuple[Path
 tags: [AI작업큐, painpoint/질의응답]
 question: {question}
 created: {datetime.now().isoformat()}
-answered_by: {"llm-auto" if answer else "manual-paste"}
+answered_by: {"local-llm" if answer else "claude-paste"}
 ---
 
 # 내 자료 질의응답
 
 > 검색된 자료 {len(hits)}건을 근거로 답변 (로컬 검색, API 비용 0)
 
-{answer_block}## AI 붙여넣기용 프롬프트 (로컬 LLM 미사용 시)
+{answer_block}## Claude 붙여넣기용 프롬프트 (로컬 LLM 미사용 시)
 
 ```
 {prompt}

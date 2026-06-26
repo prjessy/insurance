@@ -1,4 +1,4 @@
-"""Claude 붙여넣기용 프롬프트 팩 생성.
+"""AI 붙여넣기용 프롬프트 팩 생성.
 
 도메인 용어/폴더는 활성 프로파일(config.py load_profile)에서 가져온다.
 프로파일에 prompts 가 정의돼 있으면 그것을, 없으면 vault 의 프롬프트.md 섹션을 쓴다.
@@ -97,11 +97,11 @@ entity: {customer}
 created: {datetime.now().isoformat()}
 ---
 
-# Claude 붙여넣기 — {rec} 정리
+# AI 붙여넣기 — {rec} 정리
 
 > 녹취 정리 20분 -> 1분
 
-## 프롬프트 (아래 전체 복사 -> Claude)
+## 프롬프트 (아래 전체 복사 -> AI)
 
 ```
 {prompt}
@@ -130,7 +130,7 @@ entity: {ent.stem}
 created: {datetime.now().isoformat()}
 ---
 
-# Claude 붙여넣기 — {proposal}
+# AI 붙여넣기 — {proposal}
 
 > 제안서 30분 -> 2분
 
@@ -164,7 +164,7 @@ entity: {ent.stem}
 created: {datetime.now().isoformat()}
 ---
 
-# Claude 붙여넣기 — {message}
+# AI 붙여넣기 — {message}
 
 > 문자 작성 10분 -> 30초
 
@@ -191,7 +191,7 @@ source: {excel_path.name}
 created: {datetime.now().isoformat()}
 ---
 
-# Claude 붙여넣기 — 엑셀/자료 -> {entity_label} 카드
+# AI 붙여넣기 — 엑셀/자료 -> {entity_label} 카드
 
 > 엑셀 명단 -> 카드 형식 변환
 

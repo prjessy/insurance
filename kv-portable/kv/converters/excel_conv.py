@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import csv
 from pathlib import Path
 
 from kv.converters.base import BaseConverter, ConvertResult
@@ -7,15 +8,20 @@ from kv.converters.base import BaseConverter, ConvertResult
 
 class ExcelConverter(BaseConverter):
     source_type = "excel"
-    extensions = {".xlsx", ".xlsm", ".xltx"}
+    extensions = {".xlsx", ".xlsm", ".xltx", ".csv", ".tsv"}
 
     def convert(self, path: Path) -> ConvertResult:
-        tables = self._sheets_to_markdown(path)
+        if path.suffix.lower() in {".csv", ".tsv"}:
+            tables = self._csv_to_markdown(path)
+            kind = "CSV → 마크다운 표"
+        else:
+            tables = self._sheets_to_markdown(path)
+            kind = "엑셀 → 마크다운 표"
         body = f"""# {path.stem}
 
 ## 원본
 - 파일: `{path.name}`
-- 유형: 엑셀 → 마크다운 표
+- 유형: {kind}
 
 {tables}
 """
@@ -25,6 +31,17 @@ class ExcelConverter(BaseConverter):
             source_type=self.source_type,
             extra_meta={"sheet_count": tables.count("## 시트:")},
         )
+
+    def _csv_to_markdown(self, path: Path) -> str:
+        try:
+            delim = "\t" if path.suffix.lower() == ".tsv" else ","
+            with open(path, encoding="utf-8-sig", newline="") as f:
+                rows = [tuple(r) for r in csv.reader(f, delimiter=delim)]
+            if not rows:
+                return "(빈 CSV 파일)"
+            return self._rows_to_md_table(rows)
+        except Exception as e:
+            return f"(CSV 변환 오류: {e})"
 
     def _sheets_to_markdown(self, path: Path) -> str:
         try:

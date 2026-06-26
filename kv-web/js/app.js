@@ -397,7 +397,7 @@ function buildPack(mode) {
     text = PROMPTS.message.replace("{{CUSTOMER}}", customers[custName] || "");
   }
   const out = document.getElementById("prompt-output");
-  out.innerHTML = `<h3>Claude에 복사하세요</h3><div class="prompt-box" id="pack-text">${esc(text)}</div><button class="btn" id="btn-copy">📋 복사</button>`;
+  out.innerHTML = `<h3>AI에 복사하세요</h3><div class="prompt-box" id="pack-text">${esc(text)}</div><button class="btn" id="btn-copy">📋 복사</button>`;
   document.getElementById("btn-copy").onclick = () => {
     navigator.clipboard.writeText(text);
     toast("클립보드에 복사됨");
@@ -428,7 +428,9 @@ function renderRecent() {
 }
 
 function renderPain() {
-  document.getElementById("pain-grid").innerHTML = PAIN_POINTS.map(p => `
+  const grid = document.getElementById("pain-grid");
+  if (!grid) return;
+  grid.innerHTML = PAIN_POINTS.map(p => `
     <div class="pain-card">
       <h3>${p.chip}</h3>
       <div class="time">${p.asis} → <b style="color:var(--teal)">${p.tobe}</b></div>
@@ -519,34 +521,71 @@ document.getElementById("import-json").onchange = async e => {
   toast("백업 복원 완료");
 };
 
-// --- 프로파일(카테고리) 배지 ---
+// --- 프로파일(카테고리) ---
 async function loadProfile() {
   try {
     const p = await fetch("/api/profile").then(r => r.json());
-    if (p && p.name) {
-      const b = document.getElementById("profile-badge");
-      if (b) b.textContent = `${p.category || ""} · ${p.name}`;
-    }
+    if (!p || !p.category) return;
+    const b = document.getElementById("profile-badge");
+    if (b) b.textContent = p.category;            // 배지는 카테고리만 (중복 제거)
+    const sp = document.getElementById("settings-profile");
+    const f = p.folders || {};
+    if (sp) sp.textContent = `현재: ${p.category} · 폴더 ${f.entity_db}/${f.catalog_db}/${f.records}`;
+    const sel = document.getElementById("settings-category");
+    if (sel && p.active) sel.value = p.active;
   } catch { /* 정적 서버면 무시 */ }
+}
+
+async function setCategory(profileKey) {
+  try {
+    const r = await fetch("/api/profile", {
+      method: "POST", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ profile: profileKey }),
+    });
+    const d = await r.json();
+    if (r.ok && d.ok) {
+      toast(`카테고리 변경됨 → ${profileKey}`);
+      await loadProfile();
+      await loadServerDashboard();
+    } else { toast("변경 실패: " + (d.error || "")); }
+  } catch { toast("API 연결 실패"); }
+}
+
+// --- 대시보드 (백엔드 고객DB 집계 — Obsidian 불필요) ---
+async function loadServerDashboard() {
+  try {
+    const d = await fetch("/api/dashboard").then(r => r.json());
+    if (!d || d.total === undefined) return false;
+    const stats = document.getElementById("dash-stats");
+    if (stats) stats.innerHTML =
+      `<div class="stat"><b>${d.total}</b>${esc(d.entity_label)} 수</div>` +
+      `<div class="stat"><b>${d.renewal_soon.length}</b>갱신 임박(60일)</div>` +
+      Object.entries(d.by_tag || {}).map(([t, n]) => `<div class="stat"><b>${n}</b>${esc(t)}</div>`).join("");
+    const rt = document.querySelector("#dash-renewal tbody");
+    if (rt) rt.innerHTML = d.renewal_soon.length ? d.renewal_soon.map(r =>
+      `<tr><td>${esc(r.name)}</td><td>${esc(r.next_date)} (D-${r._days})</td><td>${esc(r.tags)}</td><td>${esc(r.contact)}</td><td></td></tr>`).join("")
+      : '<tr><td colspan="5" class="hint">갱신 임박 없음</td></tr>';
+    const at = document.querySelector("#dash-all tbody");
+    if (at) at.innerHTML = d.all.map(r =>
+      `<tr><td>${esc(r.name)}</td><td>${esc(r.next_date)}</td><td>${esc(r.tags)}</td><td>${esc(r.contact)}</td></tr>`).join("");
+    return true;
+  } catch { return false; }
 }
 
 // --- AI 질문 (LLM 자동 답변) ---
 async function checkAskLLM() {
   const el = document.getElementById("ask-llm-state");
-  if (!el) return;
+  const ss = document.getElementById("settings-status");
+  let txt, bg;
   try {
     const h = await fetch("/api/health").then(r => r.json());
-    if (h.llm_available) {
-      el.textContent = `🤖 자동답변 ON (${h.model || "LLM"})`;
-      el.style.background = "var(--teal)";
-    } else {
-      el.textContent = "붙여넣기 모드 (LLM 꺼짐)";
-      el.style.background = "#888";
-    }
+    if (h.llm_available) { txt = `🤖 자동 모드 — LLM 연결됨 (${h.model || "LLM"})`; bg = "var(--emerald)"; }
+    else { txt = "✋ 수동 모드 — LLM 없음 (프롬프트 복사해 외부 AI에 붙여넣기)"; bg = "var(--amber)"; }
   } catch {
-    el.textContent = "API 없음 — 'python -m kv serve' 로 실행하세요";
-    el.style.background = "#c0392b";
+    txt = "⚠️ API 없음 — 서버(웹시작.bat)로 실행해야 합니다"; bg = "var(--accent)";
   }
+  if (el) { el.textContent = txt.replace(/^[🤖✋⚠️] /, ""); el.style.background = bg; }
+  if (ss) { ss.textContent = txt; ss.style.background = bg; ss.style.color = "#fff"; }
 }
 
 function renderAnswer(text) {
@@ -573,7 +612,7 @@ async function doAsk() {
     if (data.answer) {
       ansEl.innerHTML = "<h3>🤖 자동 답변</h3>" + renderAnswer(data.answer);
     } else {
-      ansEl.innerHTML = '<p class="hint">LLM이 꺼져 있어 답변이 없습니다. 검색된 자료를 참고하거나 AI작업큐 프롬프트를 Claude에 붙여넣으세요.</p>';
+      ansEl.innerHTML = '<p class="hint">LLM이 꺼져 있어 답변이 없습니다. 검색된 자료를 참고하거나 AI작업큐 프롬프트를 AI에 붙여넣으세요.</p>';
     }
     const hits = data.hits || [];
     srcEl.innerHTML = hits.length ? "<h3 style='margin-top:16px'>📎 참고 자료</h3>" + hits.map(h => `
@@ -661,11 +700,20 @@ if (askInput) askInput.addEventListener("keydown", e => {
   if (e.key === "Enter" && (e.ctrlKey || e.metaKey)) doAsk();
 });
 
+// 대시보드 탭 누르면 서버 데이터로 새로고침
+document.querySelectorAll('.tabs button[data-tab="dashboard"]').forEach(b => {
+  b.addEventListener("click", loadServerDashboard);
+});
+// 설정: 카테고리(프로파일) 전환
+const catSel = document.getElementById("settings-category");
+if (catSel) catSel.addEventListener("change", e => setCategory(e.target.value));
+
 await loadDocs();
 await loadDemoCustomers();
 await checkServer();
 await loadProfile();
 await checkAskLLM();
+await loadServerDashboard();
 updateStats();
 renderRecent();
 renderPain();

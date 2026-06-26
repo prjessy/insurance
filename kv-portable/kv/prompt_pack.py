@@ -1,16 +1,20 @@
-"""Claude 붙여넣기용 프롬프트 팩 생성 (프롬프트.md 기반)."""
+"""Claude 붙여넣기용 프롬프트 팩 생성.
+
+도메인 용어/폴더는 활성 프로파일(config.py load_profile)에서 가져온다.
+프로파일에 prompts 가 정의돼 있으면 그것을, 없으면 vault 의 프롬프트.md 섹션을 쓴다.
+"""
 
 from __future__ import annotations
 
 from datetime import datetime
 from pathlib import Path
 
-from kv.config import load_config
+from kv.config import profile_folder, profile_label, profile_prompt
 from kv.import_refs import vault_root
 
 
 def _queue_dir() -> Path:
-    d = vault_root() / "AI작업큐"
+    d = vault_root() / profile_folder("queue")
     d.mkdir(parents=True, exist_ok=True)
     return d
 
@@ -39,8 +43,16 @@ def _read_prompt_section(section: str) -> str:
     return block
 
 
-def _find_customer(name: str) -> Path | None:
-    root = vault_root() / "고객DB"
+def _prompt(key: str, section: str) -> str:
+    """프로파일 프롬프트 우선, 없으면 프롬프트.md 섹션 fallback."""
+    p = profile_prompt(key)
+    return p if p else _read_prompt_section(section)
+
+
+def _find_entity(name: str) -> Path | None:
+    root = vault_root() / profile_folder("entity_db")
+    if not root.exists():
+        return None
     for p in root.glob("*.md"):
         if p.name.startswith("_"):
             continue
@@ -49,8 +61,18 @@ def _find_customer(name: str) -> Path | None:
     return None
 
 
-def _load_products() -> str:
-    root = vault_root() / "상품DB"
+def _entity_template() -> str:
+    root = vault_root() / profile_folder("entity_db")
+    if root.exists():
+        for p in sorted(root.glob("_*.md")):
+            return p.read_text(encoding="utf-8")
+    return "(템플릿 없음)"
+
+
+def _load_catalog() -> str:
+    root = vault_root() / profile_folder("catalog_db")
+    if not root.exists():
+        return "(목록 없음)"
     parts = []
     for p in sorted(root.glob("*.md")):
         if p.name.startswith("_"):
@@ -67,16 +89,17 @@ def _write_pack(name: str, content: str) -> Path:
 
 
 def pack_counsel(transcript: str, customer: str = "") -> Path:
-    prompt = _read_prompt_section("①")
+    rec = profile_label("record")
+    prompt = _prompt("summarize", "①")
     body = f"""---
 tags: [AI작업큐, painpoint/녹취정리]
-customer: {customer}
+entity: {customer}
 created: {datetime.now().isoformat()}
 ---
 
-# Claude 붙여넣기 — ① 상담 정리
+# Claude 붙여넣기 — {rec} 정리
 
-> index.html TO-BE: 녹취 정리 20분 -> 1분
+> 녹취 정리 20분 -> 1분
 
 ## 프롬프트 (아래 전체 복사 -> Claude)
 
@@ -88,64 +111,72 @@ created: {datetime.now().isoformat()}
 
 {transcript}
 """
-    return _write_pack(f"상담정리_{customer or '미지정'}", body)
+    return _write_pack(f"{rec}정리_{customer or '미지정'}", body)
 
 
-def pack_propose(customer_name: str) -> Path:
-    cust = _find_customer(customer_name)
-    if not cust:
-        raise FileNotFoundError(f"고객DB에서 '{customer_name}' 을 찾지 못했습니다.")
-    prompt = _read_prompt_section("②")
-    products = _load_products()
+def pack_propose(entity_name: str) -> Path:
+    ent = _find_entity(entity_name)
+    entity_label = profile_label("entity")
+    if not ent:
+        raise FileNotFoundError(
+            f"{profile_folder('entity_db')}에서 '{entity_name}' 을 찾지 못했습니다."
+        )
+    proposal = profile_label("proposal")
+    prompt = _prompt("propose", "②")
+    catalog = _load_catalog()
     body = f"""---
 tags: [AI작업큐, painpoint/제안서]
-customer: {cust.stem}
+entity: {ent.stem}
 created: {datetime.now().isoformat()}
 ---
 
-# Claude 붙여넣기 — ② 맞춤 제안서
+# Claude 붙여넣기 — {proposal}
 
-> index.html TO-BE: 제안서 30분 -> 2분
+> 제안서 30분 -> 2분
 
 ```
 {prompt}
 ```
 
-## [고객 정보] (자동 첨부)
+## [{entity_label} 정보] (자동 첨부)
 
-{cust.read_text(encoding='utf-8')}
+{ent.read_text(encoding='utf-8')}
 
-## [상품 목록] (자동 첨부)
+## [{profile_label('catalog')} 목록] (자동 첨부)
 
-{products}
+{catalog}
 """
-    return _write_pack(f"제안서_{cust.stem}", body)
+    return _write_pack(f"{proposal}_{ent.stem}", body)
 
 
-def pack_message(customer_name: str) -> Path:
-    cust = _find_customer(customer_name)
-    if not cust:
-        raise FileNotFoundError(f"고객DB에서 '{customer_name}' 을 찾지 못했습니다.")
-    prompt = _read_prompt_section("③")
+def pack_message(entity_name: str) -> Path:
+    ent = _find_entity(entity_name)
+    entity_label = profile_label("entity")
+    if not ent:
+        raise FileNotFoundError(
+            f"{profile_folder('entity_db')}에서 '{entity_name}' 을 찾지 못했습니다."
+        )
+    message = profile_label("message")
+    prompt = _prompt("message", "③")
     body = f"""---
 tags: [AI작업큐, painpoint/안내문자]
-customer: {cust.stem}
+entity: {ent.stem}
 created: {datetime.now().isoformat()}
 ---
 
-# Claude 붙여넣기 — ③ 안내 문자
+# Claude 붙여넣기 — {message}
 
-> index.html TO-BE: 문자 작성 10분 -> 30초
+> 문자 작성 10분 -> 30초
 
 ```
 {prompt}
 ```
 
-## [고객 정보]
+## [{entity_label} 정보]
 
-{cust.read_text(encoding='utf-8')}
+{ent.read_text(encoding='utf-8')}
 """
-    return _write_pack(f"문자_{cust.stem}", body)
+    return _write_pack(f"{message}_{ent.stem}", body)
 
 
 def pack_excel(excel_path: Path) -> Path:
@@ -153,23 +184,21 @@ def pack_excel(excel_path: Path) -> Path:
 
     conv = ExcelConverter()
     result = conv.convert(excel_path)
-    prompt = _read_prompt_section("④")
-    if "④" not in prompt and "자료" not in prompt:
-        prompt = _read_prompt_section("①")
+    entity_label = profile_label("entity")
     body = f"""---
 tags: [AI작업큐, painpoint/엑셀카드]
 source: {excel_path.name}
 created: {datetime.now().isoformat()}
 ---
 
-# Claude 붙여넣기 — ④ 엑셀/자료 -> 고객 카드
+# Claude 붙여넣기 — 엑셀/자료 -> {entity_label} 카드
 
-> index.html: 엑셀 고객명단 -> 카드 형식 변환
+> 엑셀 명단 -> 카드 형식 변환
 
 ```
-이 엑셀/자료를 우리 카드 형식으로 정리해줘.
-(이름·연락처·가족·갱신일·태그)
-고객DB/_고객-템플릿.md 형식을 따라줘.
+이 엑셀/자료를 우리 {entity_label} 카드 형식으로 정리해줘.
+아래 참고 템플릿의 형식(YAML frontmatter)을 따라줘.
+추측하지 말고 자료에 있는 정보만 사용해.
 
 \"\"\"
 {result.body}
@@ -178,6 +207,6 @@ created: {datetime.now().isoformat()}
 
 ## 참고 템플릿
 
-{(vault_root() / '고객DB' / '_고객-템플릿.md').read_text(encoding='utf-8')}
+{_entity_template()}
 """
     return _write_pack(f"엑셀변환_{excel_path.stem}", body)

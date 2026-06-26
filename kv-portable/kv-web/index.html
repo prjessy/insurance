@@ -3,19 +3,23 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Knowledge Vault Web — Python 불필요</title>
+  <title>모아큐 — 자료를 모아, AI에게 묻다</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700;900&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="css/style.css">
   <script src="https://cdn.sheetjs.com/xlsx-0.20.1/package/dist/xlsx.full.min.js"></script>
 </head>
 <body>
 <div class="wrap">
   <header>
-    <h1>보험 영업 AI 도우미 <span class="badge">웹 버전</span></h1>
-    <p>Python 없이 브라우저만 — 수집 · 대시보드 · 검색 · Claude 프롬프트 · MD 내보내기</p>
+    <h1>모아큐 <span class="badge" id="profile-badge">금융</span></h1>
+    <p>흩어진 자료를 모아 <b>AI에게 묻다</b> — 엑셀·문서·캡처·URL → 자동 정리 · 검색 · 대시보드</p>
   </header>
 
   <nav class="tabs">
     <button class="active" data-tab="home">🏠 시작</button>
+    <button data-tab="ask">💬 AI 질문</button>
     <button data-tab="dashboard">📊 대시보드</button>
     <button data-tab="collect">📥 수집</button>
     <button data-tab="search">🔍 검색</button>
@@ -30,10 +34,10 @@
     <div class="steps">
       <div class="step-card">
         <span class="step-num">1</span>
-        <h3>볼트 연결 (선택)</h3>
-        <p>Chrome/Edge에서 <code>E:\project\work05</code> 폴더를 열면 고객DB·상품DB가 대시보드·검색에 연결됩니다.</p>
-        <button class="btn" id="btn-home-vault">📁 볼트 폴더 열기</button>
-        <p class="hint" style="margin-top:8px">연결 안 해도 데모 고객 6명으로 체험 가능</p>
+        <h3>자료 폴더 연결 (선택)</h3>
+        <p>Chrome/Edge에서 데이터 폴더를 열면 고객DB·상품DB가 대시보드·검색에 연결됩니다.</p>
+        <button class="btn" id="btn-home-vault">📁 폴더 열기</button>
+        <p class="hint" style="margin-top:8px">연결 안 해도 샘플 데이터로 체험 가능</p>
       </div>
       <div class="step-card">
         <span class="step-num">2</span>
@@ -53,6 +57,26 @@
       <div>→</div>
       <div><small>TO-BE</small><b style="color:var(--teal)">6분</b>/고객</div>
     </div>
+  </section>
+
+  <!-- AI 질문 -->
+  <section id="panel-ask" class="panel">
+    <h2>💬 AI 질문 — 내 자료 기반 답변</h2>
+    <p class="hint">질문하면 내 자료(고객DB·상담기록·문서)를 검색해 <b>근거와 함께 자동으로 답변</b>합니다. <span id="ask-llm-state" class="badge" style="background:#888">LLM 확인중</span></p>
+    <div class="drop" id="ask-drop" style="padding:14px;margin-bottom:10px">
+      📎 자료 추가 — 엑셀·PDF·문서·메모를 여기에 드래그 (변환+인덱싱 후 바로 질문 가능)
+      <br><small>또는 클릭해서 선택</small>
+    </div>
+    <input type="file" id="ask-file" hidden accept=".xlsx,.xls,.csv,.tsv,.pdf,.pptx,.hwp,.hwpx,.txt,.md,.docx,.png,.jpg,.jpeg">
+    <div style="display:flex;gap:6px;margin-bottom:8px">
+      <input type="url" id="ask-url" placeholder="🌐 또는 URL 입력 — 웹페이지를 가져와 분석 (https://...)" style="flex:1">
+      <button class="btn secondary" id="btn-fetch-url">가져오기</button>
+    </div>
+    <div id="ask-upload-log" class="hint" style="margin-bottom:8px"></div>
+    <textarea id="ask-input" placeholder="예: 정수남 고객 갱신 상황과 추천 액션 알려줘" style="min-height:70px"></textarea>
+    <button class="btn accent" id="btn-ask">질문하기</button>
+    <div id="ask-answer" style="display:none;margin-top:14px"></div>
+    <div id="ask-sources"></div>
   </section>
 
   <!-- 대시보드 -->

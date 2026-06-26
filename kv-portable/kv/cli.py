@@ -6,6 +6,7 @@ from pathlib import Path
 
 from kv import __version__
 from kv.counsel import counsel_from_file
+from kv.ingest import collect_inbox, inbox_status
 from kv.painpoints import print_painpoints
 from kv.prompt_pack import pack_counsel, pack_excel, pack_message, pack_propose
 from kv.import_refs import count_references
@@ -142,6 +143,85 @@ def cmd_pain(_: argparse.Namespace) -> None:
     print_painpoints()
 
 
+def cmd_ask(args: argparse.Namespace) -> None:
+    from kv.ask import ask_pack
+
+    out, hits, answer = ask_pack(args.question, top_k=args.top)
+    print(f"검색된 자료 {len(hits)}건:")
+    for i, h in enumerate(hits, 1):
+        print(f"  [{i}] {h.title}")
+    if answer:
+        print("\n🤖 자동 답변 (로컬 LLM):\n")
+        print(answer)
+        print(f"\n저장: {out}")
+    else:
+        print(f"\n질의응답 프롬프트 팩: {out}")
+        print("-> AI작업큐에서 열고 Claude에 붙여넣기 (로컬 LLM 켜면 자동 답변)")
+
+
+def cmd_fetch(args: argparse.Namespace) -> None:
+    from kv.search import rebuild_index
+    from kv.webfetch import fetch_to_inbox
+
+    info = fetch_to_inbox(args.url)
+    collect_inbox(force=False)
+    refine_all(force=False)
+    n = rebuild_index()
+    print(f"가져옴: {info['title']} ({info['chars']}자) -> inbox/notes")
+    print(f"인덱스 갱신: {n}개 문서. 이제 'python -m kv ask' 로 질문하세요.")
+
+
+def cmd_serve(args: argparse.Namespace) -> None:
+    from kv.webserver import serve
+
+    serve(port=args.port, open_browser=not args.no_browser)
+
+
+def cmd_llm(args: argparse.Namespace) -> None:
+    from kv.llm import (
+        _base_url,
+        _model,
+        _provider,
+        generate,
+        has_key,
+        llm_available,
+        llm_enabled,
+    )
+
+    print(f"LLM: enabled={llm_enabled()}  provider={_provider()}  model={_model() or '(미설정)'}")
+    print(f"  base_url={_base_url() or '(미설정)'}  키설정됨={has_key()}")
+    if not llm_enabled():
+        print("→ config.yaml 의 llm.enabled 를 true 로 바꾸세요.")
+        return
+    if not llm_available():
+        print("→ 연결 불가. base_url/키/서버 상태(key.txt)를 확인하세요.")
+        return
+    print("→ 설정 OK")
+    if args.prompt:
+        print("\n응답:\n")
+        print(generate(args.prompt) or "(응답 없음 — 엔드포인트/모델 확인)")
+
+
+def cmd_profiles(_: argparse.Namespace) -> None:
+    from kv.config import available_profiles, load_config, load_profile
+
+    active = load_config().get("profile") or "(기본 insurance)"
+    prof = load_profile()
+    print(f"=== 활성 프로파일: {active} ===")
+    print(f"  이름: {prof.get('name')}  /  카테고리: {prof.get('category')}")
+    print("\n[용어]")
+    for k, v in prof.get("labels", {}).items():
+        print(f"  {k:10} -> {v}")
+    print("\n[폴더]")
+    for k, v in prof.get("folders", {}).items():
+        print(f"  {k:10} -> {v}")
+    avail = available_profiles()
+    if avail:
+        print(f"\n[사용 가능 프로파일] {', '.join(avail)}")
+        print("  전환: config.yaml 의  profile:  값을 바꾸세요.")
+        print("  새 산업: profiles/<이름>.yaml 추가.")
+
+
 def cmd_counsel(args: argparse.Namespace) -> None:
     if args.audio:
         path = counsel_from_file(Path(args.audio), args.customer, args.channel)
@@ -220,6 +300,27 @@ def main(argv: list[str] | None = None) -> int:
 
     p_pain = sub.add_parser("pain", help="index.html pain point -> 해결 명령")
     p_pain.set_defaults(func=cmd_pain)
+
+    p_profiles = sub.add_parser("profiles", help="산업 프로파일 목록/현재 설정 보기")
+    p_profiles.set_defaults(func=cmd_profiles)
+
+    p_ask = sub.add_parser("ask", help="내 자료 기반 질의응답 (로컬 LLM 자동/Claude 붙여넣기)")
+    p_ask.add_argument("question", help="질문")
+    p_ask.add_argument("--top", type=int, default=5, help="참고할 자료 수")
+    p_ask.set_defaults(func=cmd_ask)
+
+    p_llm = sub.add_parser("llm", help="로컬 LLM(Ollama) 연결 확인/테스트")
+    p_llm.add_argument("prompt", nargs="?", default="", help="테스트 프롬프트(선택)")
+    p_llm.set_defaults(func=cmd_llm)
+
+    p_fetch = sub.add_parser("fetch", help="URL 웹페이지를 가져와 MD로 저장·인덱싱")
+    p_fetch.add_argument("url", help="가져올 URL (https://...)")
+    p_fetch.set_defaults(func=cmd_fetch)
+
+    p_serve = sub.add_parser("serve", help="웹 UI 실행 (LLM·프로파일·검색 연동)")
+    p_serve.add_argument("--port", type=int, default=8765)
+    p_serve.add_argument("--no-browser", action="store_true", help="브라우저 자동 열기 끄기")
+    p_serve.set_defaults(func=cmd_serve)
 
     p_counsel = sub.add_parser("counsel", help="녹취/전사 -> 상담기록 + 프롬프트팩")
     p_counsel.add_argument("--customer", "-c", required=True, help="고객명 (고객DB 파일명)")

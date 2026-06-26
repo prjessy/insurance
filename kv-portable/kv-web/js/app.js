@@ -519,9 +519,180 @@ document.getElementById("import-json").onchange = async e => {
   toast("백업 복원 완료");
 };
 
+// --- 프로파일(카테고리) 배지 ---
+async function loadProfile() {
+  try {
+    const p = await fetch("/api/profile").then(r => r.json());
+    if (p && p.name) {
+      const b = document.getElementById("profile-badge");
+      if (b) b.textContent = `${p.category || ""} · ${p.name}`;
+    }
+  } catch { /* 정적 서버면 무시 */ }
+}
+
+// --- 대시보드 (백엔드 고객DB 집계 — Obsidian 불필요) ---
+async function loadServerDashboard() {
+  try {
+    const d = await fetch("/api/dashboard").then(r => r.json());
+    if (!d || d.total === undefined) return false;
+    const stats = document.getElementById("dash-stats");
+    if (stats) stats.innerHTML =
+      `<div class="stat"><b>${d.total}</b>${esc(d.entity_label)} 수</div>` +
+      `<div class="stat"><b>${d.renewal_soon.length}</b>갱신 임박(60일)</div>` +
+      Object.entries(d.by_tag || {}).map(([t, n]) => `<div class="stat"><b>${n}</b>${esc(t)}</div>`).join("");
+    const rt = document.querySelector("#dash-renewal tbody");
+    if (rt) rt.innerHTML = d.renewal_soon.length ? d.renewal_soon.map(r =>
+      `<tr><td>${esc(r.name)}</td><td>${esc(r.next_date)} (D-${r._days})</td><td>${esc(r.tags)}</td><td>${esc(r.contact)}</td><td></td></tr>`).join("")
+      : '<tr><td colspan="5" class="hint">갱신 임박 없음</td></tr>';
+    const at = document.querySelector("#dash-all tbody");
+    if (at) at.innerHTML = d.all.map(r =>
+      `<tr><td>${esc(r.name)}</td><td>${esc(r.next_date)}</td><td>${esc(r.tags)}</td><td>${esc(r.contact)}</td></tr>`).join("");
+    return true;
+  } catch { return false; }
+}
+
+// --- AI 질문 (LLM 자동 답변) ---
+async function checkAskLLM() {
+  const el = document.getElementById("ask-llm-state");
+  if (!el) return;
+  try {
+    const h = await fetch("/api/health").then(r => r.json());
+    if (h.llm_available) {
+      el.textContent = `🤖 자동답변 ON (${h.model || "LLM"})`;
+      el.style.background = "var(--teal)";
+    } else {
+      el.textContent = "붙여넣기 모드 (LLM 꺼짐)";
+      el.style.background = "#888";
+    }
+  } catch {
+    el.textContent = "API 없음 — 'python -m kv serve' 로 실행하세요";
+    el.style.background = "#c0392b";
+  }
+}
+
+function renderAnswer(text) {
+  const safe = esc(text || "").replace(/\*\*(.+?)\*\*/g, "<b>$1</b>").replace(/\n/g, "<br>");
+  return `<div class="prompt-box" style="white-space:normal;line-height:1.6">${safe}</div>`;
+}
+
+async function doAsk() {
+  const q = document.getElementById("ask-input").value.trim();
+  if (!q) { toast("질문을 입력하세요"); return; }
+  const ansEl = document.getElementById("ask-answer");
+  const srcEl = document.getElementById("ask-sources");
+  ansEl.style.display = "block";
+  ansEl.innerHTML = '<p class="hint">⏳ 자료 검색 + 답변 생성 중…</p>';
+  srcEl.innerHTML = "";
+  try {
+    const res = await fetch("/api/ask", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ question: q, top: 5 }),
+    });
+    const data = await res.json();
+    if (!res.ok) { ansEl.innerHTML = `<p class="hint">오류: ${esc(data.error || "")}</p>`; return; }
+    if (data.answer) {
+      ansEl.innerHTML = "<h3>🤖 자동 답변</h3>" + renderAnswer(data.answer);
+    } else {
+      ansEl.innerHTML = '<p class="hint">LLM이 꺼져 있어 답변이 없습니다. 검색된 자료를 참고하거나 AI작업큐 프롬프트를 Claude에 붙여넣으세요.</p>';
+    }
+    const hits = data.hits || [];
+    srcEl.innerHTML = hits.length ? "<h3 style='margin-top:16px'>📎 참고 자료</h3>" + hits.map(h => `
+      <div class="search-hit">
+        <h4>${esc(h.title)}</h4>
+        <div class="snip">${esc(h.snippet || "")}</div>
+      </div>`).join("") : "";
+  } catch (e) {
+    ansEl.innerHTML = `<p class="hint">API 연결 실패 — <code>python -m kv serve</code> 로 실행해야 AI 질문이 동작합니다.</p>`;
+  }
+}
+
+// 자료 업로드 → 서버에서 변환·인덱싱 → 바로 질문 가능
+async function uploadForAsk(file) {
+  const log = document.getElementById("ask-upload-log");
+  log.textContent = `⏳ "${file.name}" 변환·인덱싱 중…`;
+  try {
+    const dataUrl = await new Promise((res, rej) => {
+      const fr = new FileReader();
+      fr.onload = () => res(fr.result);
+      fr.onerror = rej;
+      fr.readAsDataURL(file);
+    });
+    const r = await fetch("/api/collect", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ filename: file.name, data_base64: dataUrl }),
+    });
+    const d = await r.json();
+    if (r.ok && d.ok) {
+      log.innerHTML = `✅ <b>${esc(d.file)}</b> 추가됨 (${d.type}, 인덱스 ${d.indexed}건). 이제 아래에 질문하세요!`;
+    } else {
+      log.textContent = `오류: ${d.error || "변환 실패"}`;
+    }
+  } catch (e) {
+    log.innerHTML = "API 연결 실패 — <code>python -m kv serve</code> (또는 웹시작.bat)로 실행해야 합니다.";
+  }
+}
+
+const askDrop = document.getElementById("ask-drop");
+const askFile = document.getElementById("ask-file");
+if (askDrop && askFile) {
+  askDrop.onclick = () => askFile.click();
+  askDrop.ondragover = e => { e.preventDefault(); askDrop.classList.add("drag"); };
+  askDrop.ondragleave = () => askDrop.classList.remove("drag");
+  askDrop.ondrop = async e => {
+    e.preventDefault(); askDrop.classList.remove("drag");
+    for (const f of e.dataTransfer.files) await uploadForAsk(f);
+  };
+  askFile.onchange = async () => {
+    for (const f of askFile.files) await uploadForAsk(f);
+    askFile.value = "";
+  };
+}
+
+// URL 가져오기 → 변환·인덱싱
+async function fetchUrl() {
+  const url = document.getElementById("ask-url").value.trim();
+  const log = document.getElementById("ask-upload-log");
+  if (!url) { toast("URL을 입력하세요"); return; }
+  log.textContent = `⏳ "${url}" 가져오는 중…`;
+  try {
+    const r = await fetch("/api/fetch-url", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ url }),
+    });
+    const d = await r.json();
+    if (r.ok && d.ok) {
+      log.innerHTML = `✅ <b>${esc(d.title)}</b> 가져옴 (${d.chars}자, 인덱스 ${d.indexed}건). 이제 질문하세요!`;
+    } else {
+      log.textContent = `오류: ${d.error || "가져오기 실패"}`;
+    }
+  } catch (e) {
+    log.innerHTML = "API 연결 실패 — 서버(웹시작.bat)로 실행해야 합니다.";
+  }
+}
+const fetchBtn = document.getElementById("btn-fetch-url");
+if (fetchBtn) fetchBtn.onclick = fetchUrl;
+
+const askBtn = document.getElementById("btn-ask");
+if (askBtn) askBtn.onclick = doAsk;
+const askInput = document.getElementById("ask-input");
+if (askInput) askInput.addEventListener("keydown", e => {
+  if (e.key === "Enter" && (e.ctrlKey || e.metaKey)) doAsk();
+});
+
+// 대시보드 탭 누르면 서버 데이터로 새로고침
+document.querySelectorAll('.tabs button[data-tab="dashboard"]').forEach(b => {
+  b.addEventListener("click", loadServerDashboard);
+});
+
 await loadDocs();
 await loadDemoCustomers();
 await checkServer();
+await loadProfile();
+await checkAskLLM();
+await loadServerDashboard();
 updateStats();
 renderRecent();
 renderPain();

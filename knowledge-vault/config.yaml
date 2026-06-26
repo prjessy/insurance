@@ -71,7 +71,7 @@ inbox_guide:
 use_markitdown: true
 
 # === LLM (로컬 Ollama 또는 외부 OpenAI 호환) ===
-# enabled: true 로 켜면 kv ask/counsel 이 자동 답변·요약. 끄면 'Claude 붙여넣기' 방식.
+# enabled: true 로 켜면 kv ask/counsel 이 자동 답변·요약. 끄면 'AI 붙여넣기' 방식.
 # provider:
 #   ollama  → 로컬/원격 Ollama.  base_url 예: http://localhost:11434
 #   openai  → OpenAI 호환(vLLM·LM Studio·사내 게이트웨이·OpenAI 등).

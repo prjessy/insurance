@@ -5,46 +5,88 @@ from __future__ import annotations
 from datetime import date
 from pathlib import Path
 
-from kv.config import load_config
+from kv.config import (
+    load_config,
+    profile_folder,
+    profile_label,
+    profile_record_tags,
+    resolve_vault_path,
+)
 from kv.tags import render_markdown
 from kv.whisper_stt import format_transcript_markdown, transcribe
 
 
 def vault_root() -> Path:
     cfg = load_config()
-    return Path(cfg["obsidian_vault"]).expanduser().resolve()
+    return resolve_vault_path(cfg["obsidian_vault"])
+
+
+def _auto_summary(text: str, entity: str, entity_db: str) -> str | None:
+    """로컬 LLM 으로 전사 요약. 미사용/실패 시 None."""
+    from kv.llm import generate, llm_available
+
+    if not llm_available():
+        return None
+    prompt = f"""너는 상담 정리 비서야. 아래 전사 내용을 다음 형식의 마크다운으로만 정리해줘.
+입력에 있는 정보만 사용하고 추측하지 마.
+
+# 핵심 요약
+- (3줄 이내)
+
+# {entity} 니즈 / 발언
+-
+
+# 파악된 정보 (→ {entity_db} 반영)
+-
+
+# 다음 액션
+- [ ]
+
+[전사 내용]
+\"\"\"
+{text.strip()}
+\"\"\""""
+    return generate(prompt)
 
 
 def counsel_from_text(text: str, customer: str, channel: str = "대면") -> Path:
     today = date.today().isoformat()
     safe_name = customer.replace("/", "-").strip()
-    filename = f"{today}-{safe_name}-상담.md"
-    dest = vault_root() / "상담기록" / filename
+    rec = profile_label("record")            # 상담 / 처리 / 기록
+    entity = profile_label("entity")          # 고객 / 요청자 / 대상
+    entity_db = profile_folder("entity_db")   # 고객DB / 요청자DB ...
+    filename = f"{today}-{safe_name}-{rec}.md"
+    dest = vault_root() / profile_folder("records") / filename
     dest.parent.mkdir(parents=True, exist_ok=True)
 
     fm = {
-        "type": "상담",
-        "고객": f"[[{safe_name}]]",
-        "상담일": today,
-        "채널": channel,
-        "tags": ["상담", "painpoint/녹취정리", "수집/자동"],
+        "type": rec,
+        "entity": f"[[{safe_name}]]",
+        profile_label("date"): today,
+        profile_label("channel"): channel,
+        "tags": profile_record_tags(),
         "status": "whisper_done",
-        "next_step": "Claude에 프롬프트① 붙여넣기 -> python -m kv pack counsel",
+        "next_step": "Claude에 정리 프롬프트 붙여넣기 -> python -m kv pack counsel",
     }
 
-    body = f"""# 핵심 요약
+    # 로컬 LLM 이 켜져 있으면 요약을 자동 생성 (없으면 붙여넣기 안내)
+    summary = _auto_summary(text, entity, entity_db)
+    if summary:
+        fm["status"] = "llm_summarized"
+
+    head = summary or f"""# 핵심 요약
 - (AI 정리 대기 — 아래 프롬프트 팩을 Claude에 붙여넣으세요)
 
-# 고객 니즈 / 발언
-- 
+# {entity} 니즈 / 발언
+-
 
-# 파악된 정보 (→ 고객DB 반영)
-- 가족구성: 
-- 가입/갱신 변동: 
-- 유형태그 변경: 
+# 파악된 정보 (→ {entity_db} 반영)
+-
 
 # 다음 액션
-- [ ] 
+- [ ]"""
+
+    body = f"""{head}
 
 ---
 

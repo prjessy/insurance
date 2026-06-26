@@ -1,7 +1,7 @@
 """로컬/외부 LLM 백엔드.
 
 설정(config.yaml 의 llm.enabled)이 켜져 있으면 프롬프트를 자동 실행한다.
-실패하면 None 을 반환해 기존 'AI 붙여넣기' 방식으로 fallback 한다.
+실패하면 None 을 반환해 기존 'Claude 붙여넣기' 방식으로 fallback 한다.
 
 지원 provider:
   - openai  : OpenAI 호환 API  (POST {base_url}/v1/chat/completions)

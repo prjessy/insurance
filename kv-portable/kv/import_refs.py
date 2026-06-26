@@ -5,7 +5,7 @@ from __future__ import annotations
 import re
 from pathlib import Path
 
-from kv.config import load_config
+from kv.config import load_config, profile_folder, resolve_vault_path
 from kv.tags import parse_markdown
 
 
@@ -14,7 +14,7 @@ def vault_root() -> Path | None:
     vault = (cfg.get("obsidian_vault") or "").strip()
     if not vault:
         return None
-    return Path(vault).expanduser().resolve()
+    return resolve_vault_path(vault)
 
 
 def _excluded(name: str) -> bool:
@@ -32,7 +32,12 @@ def iter_reference_files() -> list[tuple[Path, str, list[str]]]:
         return []
 
     cfg = load_config()
-    paths = cfg.get("reference_paths", ["고객DB", "상품DB", "상담기록"])
+    default_refs = [
+        profile_folder("entity_db"),
+        profile_folder("catalog_db"),
+        profile_folder("records"),
+    ]
+    paths = cfg.get("reference_paths") or default_refs
     out: list[tuple[Path, str, list[str]]] = []
 
     for rel in paths:

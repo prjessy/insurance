@@ -1,17 +1,44 @@
 from __future__ import annotations
 
 import copy
+import sys
 from pathlib import Path
 
 import yaml
 
-ROOT = Path(__file__).resolve().parent.parent
+
+def _roots() -> tuple[Path, Path]:
+    """(데이터 루트, 번들 루트) 반환.
+
+    - 개발 모드: 둘 다 knowledge-vault 폴더
+    - exe(frozen) 모드: 데이터=exe 옆 폴더, 번들=_MEIPASS(읽기전용 리소스)
+    """
+    if getattr(sys, "frozen", False):
+        app = Path(sys.executable).resolve().parent
+        bundle = Path(getattr(sys, "_MEIPASS", app))
+        return app, bundle
+    pkg_parent = Path(__file__).resolve().parent.parent
+    return pkg_parent, pkg_parent
+
+
+ROOT, BUNDLE_DIR = _roots()
 INBOX = ROOT / "inbox"
 VAULT_RAW = ROOT / "vault" / "raw"
 VAULT_REFINED = ROOT / "vault" / "refined"
 INDEX_DIR = ROOT / "index"
 CONFIG_PATH = ROOT / "config.yaml"
-PROFILES_DIR = ROOT / "profiles"
+
+
+def _dir_with_fallback(name: str) -> Path:
+    """exe 옆에 있으면 그걸, 없으면 번들의 기본본을 사용."""
+    local = ROOT / name
+    if local.exists():
+        return local
+    bundled = BUNDLE_DIR / name
+    return bundled if bundled.exists() else local
+
+
+PROFILES_DIR = _dir_with_fallback("profiles")
 
 
 def load_config() -> dict:

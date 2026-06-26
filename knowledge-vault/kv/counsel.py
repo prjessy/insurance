@@ -66,7 +66,7 @@ def counsel_from_text(text: str, customer: str, channel: str = "대면") -> Path
         profile_label("channel"): channel,
         "tags": profile_record_tags(),
         "status": "whisper_done",
-        "next_step": "Claude에 정리 프롬프트 붙여넣기 -> python -m kv pack counsel",
+        "next_step": "AI에 정리 프롬프트 붙여넣기 -> python -m kv pack counsel",
     }
 
     # 로컬 LLM 이 켜져 있으면 요약을 자동 생성 (없으면 붙여넣기 안내)
@@ -75,7 +75,7 @@ def counsel_from_text(text: str, customer: str, channel: str = "대면") -> Path
         fm["status"] = "llm_summarized"
 
     head = summary or f"""# 핵심 요약
-- (AI 정리 대기 — 아래 프롬프트 팩을 Claude에 붙여넣으세요)
+- (AI 정리 대기 — 아래 프롬프트 팩을 AI에 붙여넣으세요)
 
 # {entity} 니즈 / 발언
 -
