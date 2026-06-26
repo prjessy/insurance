@@ -241,6 +241,19 @@ class Handler(BaseHTTPRequestHandler):
             n = rebuild_index()
             return self._json(200, {"ok": True, "title": info["title"],
                                     "chars": info["chars"], "indexed": n})
+        if path == "/api/pack":
+            mode = (data.get("mode") or "").strip()
+            target = (data.get("target") or data.get("customer") or "").strip()
+            transcript = data.get("transcript") or ""
+            from kv.prompt_pack import pack_and_answer
+
+            try:
+                r = pack_and_answer(mode, target, transcript)
+            except FileNotFoundError as e:
+                return self._json(404, {"error": str(e)})
+            except Exception as e:
+                return self._json(400, {"error": str(e)})
+            return self._json(200, {"ok": True, **r})
         if path == "/api/search":
             q = (data.get("query") or "").strip()
             if not q:

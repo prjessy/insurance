@@ -179,6 +179,54 @@ created: {datetime.now().isoformat()}
     return _write_pack(f"{message}_{ent.stem}", body)
 
 
+def _compose(mode: str, target: str = "", transcript: str = "") -> tuple[str, str, str]:
+    """(저장명, 제목, LLM에 보낼 전체 프롬프트) 반환."""
+    if mode == "counsel":
+        rec = profile_label("record")
+        full = _prompt("summarize", "①") + f"\n\n[전사 내용]\n{transcript}"
+        return f"{rec}정리_{target or '미지정'}", f"{rec} 정리", full
+    if mode in ("propose", "message"):
+        ent = _find_entity(target)
+        if not ent:
+            raise FileNotFoundError(
+                f"{profile_folder('entity_db')}에서 '{target}' 을 찾지 못했습니다."
+            )
+        elabel = profile_label("entity")
+        info = ent.read_text(encoding="utf-8")
+        if mode == "propose":
+            full = (_prompt("propose", "②")
+                    + f"\n\n[{elabel} 정보]\n{info}\n\n[{profile_label('catalog')} 목록]\n{_load_catalog()}")
+            return f"{profile_label('proposal')}_{ent.stem}", profile_label("proposal"), full
+        full = _prompt("message", "③") + f"\n\n[{elabel} 정보]\n{info}"
+        return f"{profile_label('message')}_{ent.stem}", profile_label("message"), full
+    raise ValueError(f"알 수 없는 모드: {mode}")
+
+
+def pack_and_answer(mode: str, target: str = "", transcript: str = "") -> dict:
+    """프롬프트 구성 → LLM 있으면 자동 생성, 없으면 프롬프트만. 큐에 저장."""
+    from kv.llm import generate, llm_available
+
+    name, title, prompt = _compose(mode, target, transcript)
+    answer = generate(prompt) if llm_available() else None
+    block = f"## 🤖 자동 생성 (LLM)\n\n{answer}\n\n---\n\n" if answer else ""
+    body = f"""---
+tags: [AI작업큐, {mode}]
+created: {datetime.now().isoformat()}
+answered_by: {"llm-auto" if answer else "manual-paste"}
+---
+
+# {title}
+
+{block}## 프롬프트 (LLM 없을 때 외부 AI에 복사)
+
+```
+{prompt}
+```
+"""
+    out = _write_pack(name, body)
+    return {"title": title, "prompt": prompt, "answer": answer, "file": str(out)}
+
+
 def pack_excel(excel_path: Path) -> Path:
     from kv.converters.excel_conv import ExcelConverter
 

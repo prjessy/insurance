@@ -383,25 +383,30 @@ function updateCustomerSelect() {
   });
 }
 
-function buildPack(mode) {
-  const custName = document.getElementById("customer-select").value;
+async function buildPack(mode) {
+  const sel = document.getElementById("customer-select");
+  const target = (sel && sel.value) || "";
   const transcript = document.getElementById("transcript-input").value;
-  let text = "";
-  if (mode === "counsel") {
-    text = PROMPTS.counsel.replace("{{TRANSCRIPT}}", transcript || "(전사 없음)");
-  } else if (mode === "propose") {
-    if (!custName) return toast("고객을 선택하세요");
-    text = PROMPTS.propose.replace("{{CUSTOMER}}", customers[custName] || "").replace("{{PRODUCTS}}", products || "(상품DB 없음)");
-  } else if (mode === "message") {
-    if (!custName) return toast("고객을 선택하세요");
-    text = PROMPTS.message.replace("{{CUSTOMER}}", customers[custName] || "");
-  }
+  if (mode !== "counsel" && !target) return toast("고객을 선택하세요");
   const out = document.getElementById("prompt-output");
-  out.innerHTML = `<h3>AI에 복사하세요</h3><div class="prompt-box" id="pack-text">${esc(text)}</div><button class="btn" id="btn-copy">📋 복사</button>`;
-  document.getElementById("btn-copy").onclick = () => {
-    navigator.clipboard.writeText(text);
-    toast("클립보드에 복사됨");
-  };
+  out.innerHTML = '<p class="hint">⏳ 생성 중…</p>';
+  try {
+    const r = await fetch("/api/pack", {
+      method: "POST", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ mode, target, transcript }),
+    });
+    const d = await r.json();
+    if (!r.ok) { out.innerHTML = `<p class="hint">오류: ${esc(d.error || "")}</p>`; return; }
+    if (d.answer) {
+      out.innerHTML = `<h3>🤖 자동 생성 (LLM)</h3>` + renderAnswer(d.answer);
+    } else {
+      out.innerHTML = `<h3>프롬프트 — 외부 AI에 복사</h3><div class="prompt-box" id="pack-text">${esc(d.prompt)}</div><button class="btn" id="btn-copy">📋 복사</button>`;
+      const cp = document.getElementById("btn-copy");
+      if (cp) cp.onclick = () => { navigator.clipboard.writeText(d.prompt); toast("복사됨"); };
+    }
+  } catch {
+    out.innerHTML = '<p class="hint">API 연결 실패 — 서버(웹시작.bat)로 실행해야 합니다.</p>';
+  }
 }
 
 function esc(s) { return s.replace(/&/g,"&amp;").replace(/</g,"&lt;"); }
@@ -568,6 +573,10 @@ async function loadServerDashboard() {
     const at = document.querySelector("#dash-all tbody");
     if (at) at.innerHTML = d.all.map(r =>
       `<tr><td>${esc(r.name)}</td><td>${esc(r.next_date)}</td><td>${esc(r.tags)}</td><td>${esc(r.contact)}</td></tr>`).join("");
+    // 수동 프롬프트용 고객 선택 채우기
+    const cs = document.getElementById("customer-select");
+    if (cs && d.all.length) cs.innerHTML = '<option value="">— 고객 선택 —</option>' +
+      d.all.map(r => `<option value="${esc(r.name)}">${esc(r.name)}</option>`).join("");
     return true;
   } catch { return false; }
 }
